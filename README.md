@@ -15,6 +15,7 @@ It took me about 2 months of deliberate practice and preparation for my intervie
 * [HackerRank Intervierw Preparation Kit](https://www.hackerrank.com/interview/interview-preparation-kit)
 * [System Design examples](https://www.educative.io/collection/5668639101419520/5649050225344512?authorName=Design%20Gurus)
 * [Cracking the System Design Interview](https://medium.freecodecamp.org/how-to-system-design-dda63ed27e26)
+* [Mock interviews](https://interviewing.io/)
 
 # Other
 * [Design Questions](https://github.com/yangshun/tech-interview-handbook/tree/master/design)
