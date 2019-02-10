@@ -12,6 +12,7 @@ It took me about 2 months of deliberate practice and preparation for my intervie
 * [Introduction to Algorithms](https://www.amazon.com/dp/0262033844/ref=cm_sw_em_r_mt_dp_U_bhZxCb6MAQKDW)
 * [Algorithms](https://www.educative.io/collection/5642554087309312/5663204961157120?authorName=Coderust)
 * [Leetcode medium difficulty problems](https://leetcode.com/problems/asteroid-collision/)
+* [Sample Problem](Sample.md)
 * [HackerRank Intervierw Preparation Kit](https://www.hackerrank.com/interview/interview-preparation-kit)
 * [System Design examples](https://www.educative.io/collection/5668639101419520/5649050225344512?authorName=Design%20Gurus)
 * [Cracking the System Design Interview](https://medium.freecodecamp.org/how-to-system-design-dda63ed27e26)
