@@ -20,4 +20,4 @@ It took me about 2 months of deliberate practice and preparation for my intervie
 # Other
 * [Design Questions](https://github.com/yangshun/tech-interview-handbook/tree/master/design)
 * [System Design Cheatsheet](https://gist.github.com/vasanthk/485d1c25737e8e72759f)
-* [It's doable](https://medium.freecodecamp.org/how-i-landed-offers-from-microsoft-amazon-and-twitter-without-an-ivy-league-degree-d62cfe286eb8)
+* [The Interview Experience](https://medium.freecodecamp.org/how-i-landed-offers-from-microsoft-amazon-and-twitter-without-an-ivy-league-degree-d62cfe286eb8)
