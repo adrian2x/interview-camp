@@ -1,7 +1,7 @@
 # Getting Started
-Go through the provided notebooks. Work through the coursework a few hours a day minimum to build momentum. The materials build upon previous lessons and get increasingly challenging as you progress.
+Go through the provided notebooks. Work through the coursework a few hours a day minimum to build momentum. The materials build upon previous lessons and get increasingly challenging.
 
-# Prepare for the Interview
+# Preparing for an Interview
 Prepare for questions about **data structures**, **algorithms** and **system design** (*architecture*).
 Spend some time curating your resume and focus on complex projects that you can discuss in depth. Once interviewing, drive the
 conversation and show what you know.
@@ -20,4 +20,4 @@ conversation and show what you know.
 * [System Design Cheatsheet](https://gist.github.com/vasanthk/485d1c25737e8e72759f)
 * [The Interview Experience](https://medium.freecodecamp.org/how-i-landed-offers-from-microsoft-amazon-and-twitter-without-an-ivy-league-degree-d62cfe286eb8)
 
-More in references/lib.yaml
+See references/lib.yaml
