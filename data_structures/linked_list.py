@@ -7,6 +7,10 @@ class LinkedListNode():
         self.data = data
         self.next = None
 
+    def detach(self):
+        del self.data
+        del self.next
+
 
 class LinkedList():
     "A linked list is formed by nodes which are linked together like a chain."
@@ -115,10 +119,72 @@ class LinkedList():
         if current_idx < index:
             raise IndexError('Specified index is out of bounds')
 
-
     @property
     def is_empty(self):
         return self.head is None
+
+    def distinct(self):
+        if self.is_empty:
+            return self
+
+        results = set()
+        current = self.head
+        prev = current
+        while current:
+            if current.data in results:
+                # Remove this node
+                next_node = current.next
+                current.detach()
+                prev.next = next_node
+                current = next_node
+            else:
+                results.add(current.data)
+                prev = current
+                current = current.next
+        return self
+
+
+    def union(self, list2):
+        "Return a list containing elements from both lists"
+        # Return other list if one is empty
+        if self.is_empty:
+            return list2
+        if list2.is_empty:
+            return self
+
+        # Traverse the list to the tail
+        current = self.head
+        while current.next:
+            current = current.next
+
+        # Link the last element to the head of other list
+        current.next = list2.head
+        return self
+
+    def __add__(self, list2):
+        return self.union(list2)
+
+    def intersection(self, list2):
+        "Return a list containing only elements included in both lists"
+
+        result = LinkedList()
+        # Check if either one is empty
+        if self.is_empty:
+            return result
+        if list2.is_empty:
+            return result
+
+        # Traverse the list and search in the other
+        current = self.head
+        while current:
+            if current.data in list2:
+                result.append_head(current.data)
+            current = current.next
+
+        return result.distinct()
+
+    def __and__(self, list2):
+        return self.intersection(list2)
 
 
 class DoublyLinkedList(LinkedList):
@@ -129,6 +195,7 @@ class DoublyLinkedList(LinkedList):
             self.previous = None
 
         def detach(self):
+            del self.data
             del self.previous
             del self.next
             return self
@@ -321,15 +388,70 @@ print(lst)
 lst.append_tail(3)
 print(lst)
 
-print("Inserting 4 at index 3")
+print(">>> Inserting 4 at index 3")
 lst.insert(4, 3)
 print(lst)
 assert 4 in lst
+
+print(">>> List with duplicates")
+# Test duplicates
+lst = LinkedList()
+lst.append_head(7)
+lst.append_head(7)
+lst.append_head(7)
+lst.append_head(22)
+lst.append_head(14)
+lst.append_head(21)
+lst.append_head(14)
+lst.append_head(7)
+
+print(lst)
+lst = lst.distinct()
+print(lst)
+
+
+print(">>> Union & Intersection")
+ulist1 = LinkedList()
+ulist2 = LinkedList()
+ulist1.append_head(8)
+ulist1.append_head(22)
+ulist1.append_head(15)
+
+print(">>> List 1")
+print(ulist1)
+
+ulist2.append_head(21)
+ulist2.append_head(14)
+ulist2.append_head(7)
+
+print(">>> List 2")
+print(ulist2)
+
+new_list = ulist1 + ulist2
+
+print(">>> Union of list 1 and 2")
+print(new_list)
+
+ilist1 = LinkedList()
+ilist2 = LinkedList()
+
+ilist1.append_head(14)
+ilist1.append_head(22)
+ilist1.append_head(15)
+
+ilist2.append_head(21)
+ilist2.append_head(14)
+ilist2.append_head(15)
+
+lst = ilist1 & ilist2
+print(">>> Intersect list1 & list2")
+print(lst)
 
 
 ##########################################
 ###  DoublyLinkedList Tests
 ##########################################
+print(">>> Doubly Linked Lists")
 lst = DoublyLinkedList()
 lst.append_tail(1)
 lst.append_tail(2)
