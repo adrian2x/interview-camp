@@ -9,7 +9,7 @@ class LinkedListNode:
         self.data = data
         self.next = None
 
-    def detach(self):
+    def clear(self):
         del self.data
         del self.next
 
@@ -173,7 +173,7 @@ class LinkedList(Sequence):
             if current.data in results:
                 # Remove this node
                 next_node = current.next
-                current.detach()
+                current.clear()
                 prev.next = next_node
                 current = next_node
             else:
@@ -191,12 +191,12 @@ class LinkedList(Sequence):
             return self
 
         # Traverse the list to the tail
-        current = self.head
-        while current.next:
-            current = current.next
+        # current = self.head
+        # while current.next:
+        #     current = current.next
 
         # Link the last element to the head of other list
-        current.next = list2.head
+        self.tail.next = list2.head
         return self
 
     def __add__(self, list2):
@@ -232,7 +232,7 @@ class DoublyLinkedList(LinkedList):
             self.next = None
             self.previous = None
 
-        def detach(self):
+        def clear(self):
             del self.data
             del self.previous
             del self.next
@@ -296,7 +296,7 @@ class DoublyLinkedList(LinkedList):
             # Check if we deleted the tail
             if current == self.tail:
                 self.tail = None
-            current.detach()
+            current.clear()
             return self
 
         while current is not None:
@@ -310,10 +310,38 @@ class DoublyLinkedList(LinkedList):
                 # Check tail
                 if current is self.tail:
                     self.tail = previous
-                current.detach()
+                current.clear()
                 return self
             # Continue down the list
             current = current.next
+
+    def popright(self):
+        if self.tail is None:
+            return None
+
+        node = self.tail
+        if node.previous:
+            node.previous.next = None
+        else:
+            self.head = None
+        self.tail = node.previous
+        data = node.data
+        node.clear()
+        return data
+
+    def popleft(self):
+        if self.head is None:
+            return None
+
+        node = self.head
+        if node.next:
+            node.next.previous = None
+        else:
+            self.tail = None
+        self.head = node.next
+        data = node.data
+        node.clear()
+        return data
 
     def __len__(self):
         count = 0
@@ -383,7 +411,7 @@ class DoublyLinkedList(LinkedList):
         if index == 0:
             return self.append_head(value)
         elif index > 0 and self.is_empty:
-            raise IndexError(f"Invalid index {index} on an empty list.")
+            raise IndexError('index out of list bounds')
 
         current = self.head
         current_idx = 0
@@ -398,7 +426,7 @@ class DoublyLinkedList(LinkedList):
             current = next_node
 
         if current_idx < index:
-            raise IndexError(f"Index {index} out of bounds (size {current_idx + 1})")
+            raise IndexError('index out of list bounds')
 
 
 if __name__ == "__main__":
@@ -468,6 +496,7 @@ if __name__ == "__main__":
     print(ulist2)
 
     new_list = ulist1 + ulist2
+    assert len(new_list) == 6
 
     print(">>> Union of list 1 and 2")
     print(new_list)
@@ -484,6 +513,7 @@ if __name__ == "__main__":
     ilist2.append_head(15)
 
     lst = ilist1 & ilist2
+    assert len(lst) == 2
     print(">>> Intersect list1 & list2")
     print(lst)
 
@@ -515,3 +545,10 @@ if __name__ == "__main__":
     assert 2 in lst
     assert 1 in lst
     print(lst)
+
+    assert lst.popleft() == 5
+    assert lst.popright() == 1
+    assert lst.popleft() == 3
+    assert lst.popleft() == 2
+    assert lst.popleft() is None
+    assert lst.is_empty
