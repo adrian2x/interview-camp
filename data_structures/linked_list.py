@@ -13,6 +13,12 @@ class LinkedListNode:
         del self.data
         del self.next
 
+    def pop(self):
+        "Unwrap and return node value and clear the pointers"
+        data = self.data
+        self.clear()
+        return data
+
 
 class LinkedList(Sequence):
     "A linked list is formed by nodes which are linked together like a chain."
@@ -47,23 +53,6 @@ class LinkedList(Sequence):
             node = node.next
         return count
 
-    def append_tail(self, value):
-        "Add element to the end of the list"
-        new_node = LinkedListNode(value)
-        # Check if tail exists
-        if self.tail:
-            self.tail.next = new_node
-        else:
-            self.head = new_node
-        self.tail = new_node
-        return self
-
-    def extend(self, seq: Iterable):
-        "Extend list by appending elements from a sequence"
-        for item in seq:
-            self.append_tail(item)
-        return self
-
     def append_head(self, value):
         "Add element to the beginning of the list"
         new_node = LinkedListNode(value)
@@ -83,6 +72,23 @@ class LinkedList(Sequence):
                 return True
             node = node.next
         return False
+
+    def append_tail(self, value):
+        "Add element to the end of the list"
+        new_node = LinkedListNode(value)
+        # Check if tail exists
+        if self.tail:
+            self.tail.next = new_node
+        else:
+            self.head = new_node
+        self.tail = new_node
+        return self
+
+    def extend(self, seq: Iterable):
+        "Extend list by appending elements from a sequence"
+        for item in seq:
+            self.append_tail(item)
+        return self
 
     def remove(self, value):
         """
@@ -121,6 +127,8 @@ class LinkedList(Sequence):
             previous = current
             current = current.next
 
+        raise ValueError('value is not in list')
+
     def __getitem__(self, index):
         "Return the value in a given index"
         if self.is_empty:
@@ -135,9 +143,9 @@ class LinkedList(Sequence):
             current_idx += 1
 
         if current_idx < index:
-            raise IndexError("Specified index is out of bounds")
+            raise IndexError("Cannot access index out of range")
 
-    def insert(self, value, index):
+    def insert(self, value, index: int):
         "Insert a value in a given index"
 
         if index == 0:
@@ -160,7 +168,31 @@ class LinkedList(Sequence):
             current = next_node
 
         if current_idx < index:
-            raise IndexError("Specified index is out of bounds")
+            raise IndexError("Specified index out of range")
+
+    def pop(self, index: int):
+        "Remove the element at index"
+        if self.is_empty:
+            return None
+
+        current = self.head
+        previous = current
+        while current:
+            if index == 0:
+                # Rewrite links
+                previous.next = current.next
+                # Reset head and tail
+                if current is self.tail:
+                    self.tail = previous
+                if current is self.head:
+                    self.head = current.next
+                # Detach the node and return value
+                return current.pop()
+            previous = current
+            current = current.next
+            index -= 1
+
+        raise IndexError('pop index out of range')
 
     def distinct(self):
         if self.is_empty:
@@ -236,6 +268,12 @@ class DoublyLinkedList(LinkedList):
             del self.data
             del self.previous
             del self.next
+
+        def pop(self):
+            "Unwrap and return node value and clear the pointers"
+            data = self.data
+            self.clear()
+            return data
 
     def __init__(self, items: Iterable = None):
         self.head: DoublyLinkedList.Node = None
@@ -314,6 +352,30 @@ class DoublyLinkedList(LinkedList):
                 return self
             # Continue down the list
             current = current.next
+
+    def pop(self, index: int):
+        "Remove the element at index"
+        if self.is_empty:
+            return None
+
+        current = self.head
+        while current:
+            if index == 0:
+                # Rewrite the links
+                if current.previous:
+                    current.previous.next = current.next
+                if current.next:
+                    current.next.previous = current.previous
+                # Reset head and tail
+                if current is self.tail:
+                    self.tail = current.previous
+                if current is self.head:
+                    self.head = current.next
+                return current.pop()
+            current = current.next
+            index -= 1
+
+        raise IndexError('pop index out of range')
 
     def popright(self):
         if self.tail is None:
@@ -411,7 +473,7 @@ class DoublyLinkedList(LinkedList):
         if index == 0:
             return self.append_head(value)
         elif index > 0 and self.is_empty:
-            raise IndexError('index out of list bounds')
+            raise IndexError('index out of range')
 
         current = self.head
         current_idx = 0
@@ -426,7 +488,7 @@ class DoublyLinkedList(LinkedList):
             current = next_node
 
         if current_idx < index:
-            raise IndexError('index out of list bounds')
+            raise IndexError('index out of range')
 
 
 if __name__ == "__main__":
@@ -546,9 +608,21 @@ if __name__ == "__main__":
     assert 1 in lst
     print(lst)
 
+    print("Pop elements")
     assert lst.popleft() == 5
+    print(lst)
     assert lst.popright() == 1
+    print(lst)
     assert lst.popleft() == 3
-    assert lst.popleft() == 2
-    assert lst.popleft() is None
+    print(lst)
+
+    lst.append_tail(3)
+    lst.insert(1, 0)
+    print(lst)
+    assert lst.pop(2) == 3
+    assert lst.tail.data == 2
+    assert lst.pop(1) == 2
+    assert lst.tail == lst.head
+    assert lst.pop(0) == 1
+    assert lst.tail is None
     assert lst.is_empty
