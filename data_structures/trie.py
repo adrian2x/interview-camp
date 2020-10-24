@@ -26,7 +26,7 @@ class Trie():
                 node.children[i] = TrieNode(i)
             # Start from this letter
             node = node.children[i]
-        
+
         # Finally, mark the end character as a leaf node
         node.is_last = True
 
