@@ -1,12 +1,15 @@
 """ A stack implementation using a list
 """
 
-class Stack():
+
+class Stack:
     "A Stack collection implemented with a list"
 
-    def __init__(self):
+    def __init__(self, items=()):
         "Make a new stack"
         self.stack_list = []
+        for item in items:
+            self.push(item)
 
     def push(self, item):
         "Add an element to the top of the stack"
@@ -32,17 +35,15 @@ class Stack():
     def __len__(self):
         return len(self.stack_list)
 
+    def pop_each(self):
+        "Returns an iterator that pops each item from the stack"
+        while not self.is_empty:
+            value = self.pop()
+            yield value
 
-#######################################################
-###  Stack tests
-#######################################################
-stack = Stack()
-for i in range(5):  # Pushing values in
-    stack.push(i)
+    def __iter__(self):
+        "Iterate the stack top to bottom"
+        return reversed(self.stack_list)
 
-print("top(): " + str(stack.top()))
-
-for x in range(5):  # Removing values
-    print(stack.pop())
-
-print("is_empty(): " + str(stack.is_empty))
+    def __str__(self):
+        return str([x for x in self])
