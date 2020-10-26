@@ -256,6 +256,18 @@ class LinkedList(Sequence):
     def __and__(self, list2):
         return self.intersection(list2)
 
+    def clear(self):
+        if self.is_empty:
+            return None
+
+        self.head = self.tail = None
+        return self
+
+    def __iter__(self):
+        current = self.head
+        while current:
+            yield current.data
+            current = current.next
 
 class DoublyLinkedList(LinkedList):
     class Node:
