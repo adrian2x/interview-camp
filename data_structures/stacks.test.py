@@ -125,3 +125,71 @@ operation = "921*-8-4+"
 print("Sequence:", operation)
 print(">>>", evaluate_postfix(operation))
 print(">>>", evaluate_postfix("921*-8--4+"))
+
+
+################################################
+##  Next Greater Element
+################################################
+def next_greater(items):
+    stack = Stack()
+    result = [-1] * len(items)
+    # Iterate the list in reverse
+    for i in range(len(items) - 1, -1, -1):
+        value = items[i]
+        # Pop all elements from the stack < current value
+        while not stack.is_empty and stack.top() <= value:
+            stack.pop()
+        # The top element will be > ith value
+        if not stack.is_empty:
+            result[i] = stack.top()
+        # Push current value in stack
+        stack.push(value)
+
+    return result
+
+lst = next_greater([4, 6, 3, 2, 8, 1, 9, 9, 9])
+print(lst)
+
+
+################################################
+##  Stack.min()
+################################################
+class MinStack():
+    def __init__(self, iterable=()):
+        self.main_stack = []
+        self.min_stack = Stack()
+        for value in iterable:
+            self.push(value)
+
+    def pop(self):
+        top = self.main_stack[-1]
+        # Check if we're removing the min
+        if top == self.min_stack.top():
+            self.min_stack.pop()
+        return self.main_stack.pop()
+
+    def push(self, value):
+        # If there is a new min, push to min_stack
+        if self.min_stack.is_empty or value < self.min_stack.top():
+            self.min_stack.push(value)
+        self.main_stack.append(value)
+
+    def min(self):
+        "Return the minimum in O(1)"
+        return self.min_stack.top()
+
+min_stack = MinStack([9, 3, 1, 4])
+assert min_stack.min() == 1
+min_stack.pop()
+min_stack.pop()
+assert min_stack.min() == 3
+min_stack.pop()
+assert min_stack.min() == 9
+
+min_stack = MinStack([5, 10, 6, 23, 2])
+assert min_stack.min() == 2
+min_stack.pop()
+assert min_stack.min() == 5
+
+min_stack = MinStack([5, 0, 2, 4, 1, 3, 0])
+assert min_stack.min() == 0
