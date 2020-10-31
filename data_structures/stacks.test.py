@@ -104,7 +104,7 @@ print(_sort_stack(stack))
 ################################################
 ##  Evaluate post-fix expr
 ################################################
-def evaluate_postfix(exp: str):
+def eval_postfix(exp: str):
     stack = Stack()
     try:
         for c in exp:
@@ -123,8 +123,8 @@ def evaluate_postfix(exp: str):
 
 operation = "921*-8-4+"
 print("Sequence:", operation)
-print(">>>", evaluate_postfix(operation))
-print(">>>", evaluate_postfix("921*-8--4+"))
+print(">>>", eval_postfix(operation))
+print(">>>", eval_postfix("921*-8--4+"))
 
 
 ################################################
@@ -147,6 +147,7 @@ def next_greater(items):
 
     return result
 
+
 lst = next_greater([4, 6, 3, 2, 8, 1, 9, 9, 9])
 print(lst)
 
@@ -154,7 +155,7 @@ print(lst)
 ################################################
 ##  Stack.min()
 ################################################
-class MinStack():
+class MinStack:
     def __init__(self, iterable=()):
         self.main_stack = []
         self.min_stack = Stack()
@@ -177,6 +178,7 @@ class MinStack():
     def min(self):
         "Return the minimum in O(1)"
         return self.min_stack.top()
+
 
 min_stack = MinStack([9, 3, 1, 4])
 assert min_stack.min() == 1
