@@ -1,4 +1,6 @@
-" Linked Lists implementation"
+"Linked Lists implementation"
+from typing import Iterator
+
 from collections.abc import Sequence, Iterable
 
 
@@ -33,25 +35,17 @@ class LinkedList(Sequence):
         "Print the list"
         value = ""
         if self.is_empty:
-            return "head" + end + "nil"
+            return "head" + end + "None"
         temp = self.head
         while temp.next is not None:
             value += str(temp.data) + end
             temp = temp.next
-        value += str(temp.data) + end + "nil"
+        value += str(temp.data) + end + "None"
         return value
 
     @property
     def is_empty(self):
         return self.head is None
-
-    def __len__(self):
-        count = 0
-        node = self.head
-        while node:
-            count += 1
-            node = node.next
-        return count
 
     def append_head(self, value):
         "Add element to the beginning of the list"
@@ -62,6 +56,16 @@ class LinkedList(Sequence):
         if self.tail is None:
             self.tail = self.head
 
+    # abc.Collection
+    def __len__(self):
+        count = 0
+        node = self.head
+        while node:
+            count += 1
+            node = node.next
+        return count
+
+    # abc.Collection
     def __contains__(self, value):
         "Check if the list contains a given value"
         node = self.head
@@ -72,6 +76,13 @@ class LinkedList(Sequence):
                 return True
             node = node.next
         return False
+
+    # abc.Collection
+    def __iter__(self):
+        current = self.head
+        while current:
+            yield current.data
+            current = current.next
 
     def append_tail(self, value):
         "Add element to the end of the list"
@@ -127,22 +138,23 @@ class LinkedList(Sequence):
             previous = current
             current = current.next
 
-        raise ValueError('value is not in list')
+        raise ValueError("value is not in list")
 
+    # abc.Sequence
     def __getitem__(self, index):
         "Return the value in a given index"
         if self.is_empty:
             raise ValueError("Cannot access element from empty list")
 
-        current = self.head
-        current_idx = 0
-        while current:
-            if current_idx == index:
-                return current.data
-            current = current.next
-            current_idx += 1
+        pos = 0
+        node = self.head
+        while node:
+            if pos == index:
+                return node.data
+            node = node.next
+            pos += 1
 
-        if current_idx < index:
+        if pos < index:
             raise IndexError("Cannot access index out of range")
 
     def insert(self, value, index: int):
@@ -192,7 +204,7 @@ class LinkedList(Sequence):
             current = current.next
             index -= 1
 
-        raise IndexError('pop index out of range')
+        raise IndexError("pop index out of range")
 
     def distinct(self):
         if self.is_empty:
@@ -257,17 +269,9 @@ class LinkedList(Sequence):
         return self.intersection(list2)
 
     def clear(self):
-        if self.is_empty:
-            return None
-
         self.head = self.tail = None
         return self
 
-    def __iter__(self):
-        current = self.head
-        while current:
-            yield current.data
-            current = current.next
 
 class DoublyLinkedList(LinkedList):
     class Node:
@@ -387,7 +391,7 @@ class DoublyLinkedList(LinkedList):
             current = current.next
             index -= 1
 
-        raise IndexError('pop index out of range')
+        raise IndexError("pop index out of range")
 
     def popright(self):
         if self.tail is None:
@@ -417,14 +421,6 @@ class DoublyLinkedList(LinkedList):
         node.clear()
         return data
 
-    def __len__(self):
-        count = 0
-        head = self.head
-        while head is not None:
-            count += 1
-            head = head.next
-        return count
-
     def find(self, value):
         # Search from both ends
         tail = self.tail
@@ -448,6 +444,13 @@ class DoublyLinkedList(LinkedList):
     def __contains__(self, value):
         "Check if the list contains a given value"
         return self.find(value) is not None
+
+    # abc.Reversible
+    def __reversed__(self) -> Iterator:
+        current = self.tail
+        while current:
+            yield current.data
+            current = current.previous
 
     def reverse(self, inplace=False):
         """Reverse the order of the elements in the list
@@ -485,7 +488,7 @@ class DoublyLinkedList(LinkedList):
         if index == 0:
             return self.append_head(value)
         elif index > 0 and self.is_empty:
-            raise IndexError('index out of range')
+            raise IndexError("index out of range")
 
         current = self.head
         current_idx = 0
@@ -500,141 +503,4 @@ class DoublyLinkedList(LinkedList):
             current = next_node
 
         if current_idx < index:
-            raise IndexError('index out of range')
-
-
-if __name__ == "__main__":
-    ##########################################
-    ###  LinkedList Tests
-    ##########################################
-    lst = LinkedList()
-    print(lst)
-
-    print("Inserting values in list")
-    for i in range(1, 10):
-        lst.append_head(i)
-    print(lst)
-
-    lst = LinkedList()
-    print(lst)
-    lst.append_tail(0)
-    assert lst.tail == lst.head
-    assert 0 in lst
-    print(lst)
-    lst.append_tail(1)
-    assert 1 in lst
-    print(lst)
-    lst.append_tail(2)
-    assert 2 in lst
-    print(lst)
-    lst.append_tail(3)
-    assert lst.tail.data == 3
-    print(lst)
-
-    print(">>> Inserting 4 at index 3")
-    lst.insert(4, 3)
-    print(lst)
-    assert 4 in lst
-
-    print(">>> List with duplicates")
-    # Test duplicates
-    lst = LinkedList()
-    lst.append_head(7)
-    lst.append_head(7)
-    lst.append_head(7)
-    lst.append_head(22)
-    lst.append_head(14)
-    lst.append_head(21)
-    lst.append_head(14)
-    lst.append_head(7)
-
-    print(lst)
-    lst = lst.distinct()
-    print(lst)
-
-    print(">>> Union & Intersection")
-    ulist1 = LinkedList()
-    ulist2 = LinkedList()
-    ulist1.append_head(8)
-    ulist1.append_head(22)
-    ulist1.append_head(15)
-
-    print(">>> List 1")
-    print(ulist1)
-
-    ulist2.append_head(21)
-    ulist2.append_head(14)
-    ulist2.append_head(7)
-
-    print(">>> List 2")
-    print(ulist2)
-
-    new_list = ulist1 + ulist2
-    assert len(new_list) == 6
-
-    print(">>> Union of list 1 and 2")
-    print(new_list)
-
-    ilist1 = LinkedList()
-    ilist2 = LinkedList()
-
-    ilist1.append_head(14)
-    ilist1.append_head(22)
-    ilist1.append_head(15)
-
-    ilist2.append_head(21)
-    ilist2.append_head(14)
-    ilist2.append_head(15)
-
-    lst = ilist1 & ilist2
-    assert len(lst) == 2
-    print(">>> Intersect list1 & list2")
-    print(lst)
-
-    ##########################################
-    ###  DoublyLinkedList Tests
-    ##########################################
-    print(">>> Doubly Linked Lists")
-    lst = DoublyLinkedList()
-    lst.append_tail(1)
-    lst.append_tail(2)
-    lst.append_tail(3)
-    lst.append_tail(4)
-    lst.append_tail(5)
-    print(lst)
-    print("Deleting 4")
-    lst.remove(4)
-    assert 4 not in lst
-    print(lst)
-    print("List size:", len(lst))
-
-    print("Reverse list")
-    tail = lst.tail
-    lst.reverse(inplace=True)
-    assert lst.head == tail
-    assert lst.tail.data == 1
-    assert len(lst) > 0
-    assert 5 in lst
-    assert 3 in lst
-    assert 2 in lst
-    assert 1 in lst
-    print(lst)
-
-    print("Pop elements")
-    assert lst.popleft() == 5
-    print(lst)
-    assert lst.popright() == 1
-    print(lst)
-    assert lst.popleft() == 3
-    print(lst)
-
-    lst.append_tail(3)
-    lst.insert(1, 0)
-    print(lst)
-    assert lst.pop(2) == 3
-    assert lst.tail.data == 2
-    assert lst.pop(1) == 2
-    assert lst.tail == lst.head
-    assert lst.pop(0) == 1
-    assert lst.tail is None
-    assert lst.is_empty
+            raise IndexError("index out of range")
