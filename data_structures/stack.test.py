@@ -6,11 +6,13 @@ from stack import Stack
 stack = Stack()
 for i in range(5):  # Pushing values in
     stack.push(i)
+    assert i in stack
 
+print(stack)
 print("top(): " + str(stack.top()))
 
 for x in range(5):  # Removing values
-    print(stack.pop())
+    stack.pop()
 
 print("is_empty(): " + str(stack.is_empty))
 

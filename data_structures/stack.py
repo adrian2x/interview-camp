@@ -1,8 +1,9 @@
 """ A stack implementation using a list
 """
+from collections.abc import Sequence, Iterable
 
 
-class Stack:
+class Stack(Sequence):
     "A Stack collection implemented with a list"
 
     def __init__(self, items=()):
@@ -32,18 +33,24 @@ class Stack:
             return None
         return self.stack_list[-1]
 
-    def __len__(self):
-        return len(self.stack_list)
-
     def pop_each(self):
         "Returns an iterator that pops each item from the stack"
         while not self.is_empty:
             value = self.pop()
             yield value
 
+    def __len__(self):
+        return len(self.stack_list)
+
     def __iter__(self):
         "Iterate the stack top to bottom"
         return reversed(self.stack_list)
+
+    def __contains__(self, value):
+        return value in self.stack_list
+
+    def __getitem__(self, index):
+        return self.stack_list[-index]
 
     def __str__(self):
         return str([x for x in self])
