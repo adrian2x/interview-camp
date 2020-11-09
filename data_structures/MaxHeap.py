@@ -47,12 +47,6 @@ class MaxHeap:
     def __len__(self):
         return len(self.heap)
 
-    def __getitem__(self, i):
-        return self.heap[i]
-
-    def __setitem__(self, i, val):
-        return self.update(i, val)
-
     def remove(self):
         "Remove and return max value from the tree"
         size = len(self)
@@ -71,6 +65,15 @@ class MaxHeap:
         self._max_heapify(0)
 
         return top
+
+    def __contains__(self, key):
+        return key in self.heap
+
+    def __getitem__(self, i):
+        return self.heap[i]
+
+    def __setitem__(self, i, val):
+        return self.update(i, val)
 
     def update(self, index, key):
         "Increase value of a key in the heap"
