@@ -1,10 +1,11 @@
 from collections import deque
 from collections.abc import Sequence, Iterable
+from typing import Iterator
 
-from linked_list import DoublyLinkedList
+from linkedlist import DoublyLinkedList
 
 
-class Queue:
+class Queue(Sequence):
     "A Queue is a First-In-First-Out sequence of items."
 
     def __init__(self, items: Iterable = None):
@@ -36,6 +37,28 @@ class Queue:
         front = self.front()
         self.queue_list.remove(front)
         return front
+
+    # abc.Collection
+    def __contains__(self, value):
+        return value in self.queue_list
+
+    # abc.Collection
+    def __iter__(self):
+        return iter(self.queue_list)
+
+    # abc.Collection
+    def __len__(self):
+        return len(self.queue_list)
+
+    # abc.Sequence
+    def __getitem__(self, index):
+        if self.is_empty:
+            raise IndexError("index out of range")
+        return self.queue_list[index]
+
+    # abc.Sequence
+    def __reversed__(self):
+        return reversed(self.queue_list)
 
     def reverse(self, k: int = None):
         "Reverse the first k (default all) elements in queue"

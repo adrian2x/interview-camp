@@ -7,10 +7,10 @@ from collections.abc import MutableMapping
 class HashTable(MutableMapping):
     "A Hash Table implemented using chaining with lists"
 
-    def __init__(self, size: int = 7):
-        self._slots = size
+    def __init__(self, size: int = 37):
+        self._slots = size  # number of buckets
         self._buckets: List[Optional[List[Any]]] = [None] * size
-        self._size = 0
+        self._size = 0  # keys inserted
 
     def hash(self, value):
         return hash(value) % self._slots
@@ -30,6 +30,7 @@ class HashTable(MutableMapping):
         # Update the buckets
         self._buckets = new_buckets
 
+    # abc.MutableSequence
     def __setitem__(self, key, value) -> None:
         "Add key-value entry"
         k = self.hash(key)
@@ -46,11 +47,11 @@ class HashTable(MutableMapping):
                 self._buckets[k].append((key, value))
                 self._size += 1
 
-        # Resize when load is above 2
+        # Resize when load is above threshold
         load = float(self._size) / float(self._slots)
-        if load > 2:
-            self._rehash()
+        if load > 10: self._rehash()
 
+    # abc.MutableSequence
     def __getitem__(self, key) -> Any:
         "Get the value for a key if it exists"
         k = self.hash(key)
@@ -63,6 +64,7 @@ class HashTable(MutableMapping):
         # Raise if the key was not found
         raise KeyError("key is not in hash table")
 
+    # abc.MutableSequence
     def __delitem__(self, key) -> None:
         "Delete a key-value pair"
         k = self.hash(key)
@@ -74,6 +76,7 @@ class HashTable(MutableMapping):
                     self._size -= 1
                     break
 
+    # abc.Collection
     def __contains__(self, key) -> bool:
         k = self.hash(key)
         if self._buckets[k] is not None:
@@ -82,9 +85,11 @@ class HashTable(MutableMapping):
                     return True
         return False
 
+    # abc.Collection
     def __len__(self):
         return self._size
 
+    # abc.Collection
     def __iter__(self):
         for bucket in self._buckets:
             if bucket is not None:
