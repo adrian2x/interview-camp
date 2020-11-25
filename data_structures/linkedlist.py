@@ -369,6 +369,22 @@ class DoublyLinkedList(LinkedList):
             # Continue down the list
             current = current.next
 
+    def _remove(self, node):
+        if not isinstance(node, DoublyLinkedList.Node):
+            raise TypeError("expected node to be a Node instance")
+
+        if node.previous:
+            node.previous.next = node.next
+        if node.next:
+            node.next.previous = node.previous
+
+        if self.head is node:
+            self.head = node.next
+        if self.tail is node:
+            self.tail = node.previous
+
+        return self
+
     def pop(self, index: int):
         "Remove the element at index"
         if self.is_empty:
