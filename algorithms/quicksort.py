@@ -5,14 +5,17 @@ QuickSort(A[], start, end)
     QuickSort(A, start, pivotIndex)
     QuickSort(A, pivotIndex + 1, end)
 """
-import random
 from random import randint
+from multiprocessing.pool import ThreadPool
+from os import cpu_count
+import math
 
 SMALL_ARRAY_SIZE = 47
 
 
 def swap(arr, i, j):
     arr[i], arr[j] = arr[j], arr[i]
+
 
 def partition(A, start, end):
     """
@@ -22,7 +25,7 @@ def partition(A, start, end):
     Here we use a randomized pivot to minimize swaps in case of sorted (or reverse-sorted) input.
     This makes the number of comparisons needed to sort n elements = 1.386 n log n.
     """
-    pivot = A[random.randint(start, end)]
+    pivot = A[randint(start, end)]
 
     while True:
         # move right while elements are < pivot
@@ -32,9 +35,11 @@ def partition(A, start, end):
         while A[end] > pivot:
             end -= 1
 
+        # if whe checked both sides return end
         if start >= end:
             return end
 
+        # swap elements in wrong sides of the pivot
         swap(A, start, end)
         start += 1
         end -= 1
@@ -49,45 +54,35 @@ def _qsort(A, start, end):
     if start >= end:
         return
 
-    # optimize smaller arrays with insertion sort
-    if end - start + 1 < SMALL_ARRAY_SIZE:
-        i = start + 1
-        while i <= end:
-            x = A[i]
-            j = i - 1
-            while A[j] > x and j >= start:
-                A[j + 1] = A[j]
-                j -= 1
-            A[j + 1] = x
+    # OPT: sort smaller arrays with insertion sort
+
+    # partition the array around a random pivot
+    pivot = A[randint(start, end)]
+    i, j = start, end
+    while i <= j:
+        # move right while elements are < pivot
+        while A[i] < pivot:
             i += 1
-        return
+        # move left while elements are > pivot
+        while A[j] > pivot:
+            j -= 1
 
-    pividx = partition(A, start, end)
+        if i <= j:
+            # swap elements in wrong sides of the pivot
+            swap(A, i, j)
+            i += 1
+            j -= 1
 
-    # optimize the recursive call with the smaller side first
-    if start - pividx < end - pividx - 1:
-        _qsort(A, start, pividx)
-        _qsort(A, pividx + 1, end)
-    else:
-        _qsort(A, pividx + 1, end)
-        _qsort(A, start, pividx)
+    # fat partition: include elements == pivot
+    while i < end and A[i] == pivot:
+        i += 1
+    while j > start and A[j] == pivot:
+        j -= 1
 
-
-###########################################################
-##  TESTS
-###########################################################
-
-def is_sorted(arr):
-    for i in range(1, len(arr)):
-        assert arr[i] >= arr[i - 1]
-
-
-array = [3, 7, 8, 5, 2, 1, 9, 5, 4]
-qsort(array)
-is_sorted(array)
-
-for i in range(0, 100):
-    array = [randint(0, 1000) for i in range(100)]
-    qsort(array)
-    is_sorted(array)
-
+    # OPT: call the smaller side first
+    if start < j:
+        # sort elements < pivot
+        _qsort(A, start, j)
+    if i < end:
+        # sort elements > pivot
+        _qsort(A, i, end)
