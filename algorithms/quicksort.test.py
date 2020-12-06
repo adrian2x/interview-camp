@@ -26,8 +26,8 @@ for i in range(0, 100):
 def paralell_qsort(A):
     size = len(A)
     cpus = cpu_count()
-    threshold = max(47, (1 + size) / (cpus * 4))
-    with ThreadPoolExecutor(cpus) as pool:
+    threshold = max(100, (1 + size) / (cpus * 4))
+    with ThreadPoolExecutor(cpus * 2) as pool:
         queue = deque()
         pqsort(A, 0, size - 1, pool, queue, threshold=threshold)
         while len(queue) > 0:

@@ -8,12 +8,12 @@ conversation and show what you know.
 
 # Resources
 * [Algorithms](https://www.educative.io/collection/5642554087309312/5663204961157120?authorName=Coderust)
+* [Problem Solving](https://www.educative.io/courses/grokking-the-coding-interview/xl0ElGxR6Bq)
 * [Leetcode medium difficulty problems](https://leetcode.com/problems/asteroid-collision/)
 * [HackerRank Interview Preparation Kit](https://www.hackerrank.com/interview/interview-preparation-kit)
 * [System Design examples](https://www.educative.io/collection/5668639101419520/5649050225344512?authorName=Design%20Gurus)
 * [Cracking the System Design Interview](https://medium.freecodecamp.org/how-to-system-design-dda63ed27e26)
 * [Mock interviews](https://interviewing.io/)
-* [Sample Problem](Sample.md)
 
 # Other
 * [Design Questions](https://github.com/yangshun/tech-interview-handbook/tree/master/design)

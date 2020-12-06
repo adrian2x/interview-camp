@@ -49,7 +49,7 @@ class HashTable(MutableMapping):
 
         # Resize when load is above threshold
         load = float(self._size) / float(self._slots)
-        if load > 10: self._rehash()
+        if load >= 10: self._rehash()
 
     # abc.MutableSequence
     def __getitem__(self, key) -> Any:

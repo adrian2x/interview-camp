@@ -10,6 +10,74 @@ from typing import Iterator
 from collections.abc import Collection
 
 
+class BSTNode:
+    "Inline implementation using single node class"
+    def __init__(self, value, left=None, right=None, parent=None):
+        self.value = value
+        self.left = left
+        self.right = right
+        self.parent = parent
+
+    def insert(self, value):
+        cur = self
+        parent = self
+        while cur:
+            parent = cur
+            if value <= cur.value:
+                cur = cur.left
+            else:
+                cur = cur.right
+
+        if value <= parent.value:
+            parent.left = BSTNode(value, parent=parent)
+        else:
+            parent.right = BSTNode(value, parent=parent)
+
+        return self
+
+    def search(self, value):
+        cur = self
+        while cur:
+            if value == cur.value:
+                return cur
+            if value < cur.value:
+                cur = cur.left
+            else:
+                cur = cur.right
+
+    def delete(self, value):
+        node = self.search(value)
+        if node:
+            if not node.left:
+                node._replace(node.right)
+            elif not node.right:
+                node._replace(node.left)
+            else:
+                _next = next(self)
+                self.value = _next.value
+                _next._replace(None)
+
+    def _replace(self, other):
+        parent = self.parent
+        if parent:
+            if self is parent.left:
+                parent.left = other
+            else:
+                parent.right = other
+        if other:
+            other.parent = parent
+
+    def __next__(self):
+        node = self.right
+        if node:
+            while node.left:
+                node = node.left
+            return node
+
+    def __iter__(self):
+        return inorder(self)
+
+
 class Node:
     "A Node value in the BST"
 
