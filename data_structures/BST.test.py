@@ -87,3 +87,26 @@ assert is_bst(root) == True
 fake_tree = Node(0, right=n1)
 n1.left = root
 assert is_bst(fake_tree) == False
+
+
+def lca(root, node, other):
+    """ The idea here is to first try to find the nodes in the tree,
+        and then backtrack from the leafs until the first root node where a path for
+        both given nodes was found. That node is the lowest common ancestor.
+    """
+    if root is None: return None
+
+    # check if we found either child
+    if root == node or root == other:
+        return root
+
+    # find the child nodes from left and right
+    leftSearch = lca(root.left, node, other)
+    rightSearch = lca(root.right, node, other)
+
+    # check if we found both nodes
+    if not leftSearch: return rightSearch
+    if not rightSearch: return leftSearch
+
+    # we found both nodes from here, so root is LCA
+    return root
