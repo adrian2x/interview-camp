@@ -71,3 +71,50 @@ def lcs(str1, str2):
     return helper(str1, len(str1) - 1, str2, len(str2) - 1)
 
 assert lcs("abcdgh", "aedfhr") == 3
+
+
+def levenshtein(str1, str2):
+    """
+    Levenshtein Edit Distance is defined as the minimum numbers of operations to make two given strings match.
+    The possible operations are replacing, inserting or removing a character.
+    The result should be the number of operations needed to match the two strings, which can be used as a measure of similarity.
+    """
+
+    N, M = len(str1), len(str2)
+    """
+    We need a table to store subproblems for matching substrings, like so:
+        ''   x   y   z   …
+    ''  0,   1,  2,  3,  4
+    a   1,
+    b   2,
+    c   3,
+    …   4,
+
+    The first row of the table represents the distance between the empty string ('') and the substrings of the given string ("xyz"), which requires N insertions.
+    Similarly the first column of the table represents the distance from '' to "abc" which also requires N insertions.
+    """
+    # initialize distance from empty string to given strings
+    # Note that instead of a full matrix, we could just use two arrays (one being the last computed row and the other being the current row)
+    prev = [0] * (N + 1)
+    curr = list(range(N + 1))
+
+    # check the distance between the two strings
+    for i in range(1, M + 1):
+        # swap the arrays with previous calculations
+        curr, prev = prev, curr
+        curr[0] = i # edit distance from empty string
+        for j in range(1, N + 1):
+            # when the characters match, the result is the same as excluding the characters
+            if str2[i - 1] == str1[j - 1]:
+                curr[j] = prev[j - 1]
+            else:
+                # we need at least one operation for this pair, plus the least operations for all the previous characters
+                curr[j] = 1 + min(curr[j - 1], prev[j], prev[j - 1])
+                # Note curr[j - 1] means deleting from first string (or inserting in second)
+                # prev[j] means deleting from second string (or inserting in first)
+                # prev[j - 1] means replacing either character from the strings to match the other
+
+    return curr[N]
+
+
+assert levenshtein("benyam", "ephrem") == 5
