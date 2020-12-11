@@ -47,3 +47,27 @@ def rabin_karp(text: str, search: str, base=127):
 
 assert rabin_karp("doe are hearing me", "ear") == 9
 assert rabin_karp("doe are hearing me", " me") == 15
+
+
+def lcs(str1, str2):
+    """ Find the longest common subsequence between two strings:
+    """
+    if not str1 or not str2:
+        return 0
+
+    def helper(str1, p1, str2, p2):
+        # use p1 and p2 to walk the strings backwards
+        if p1 < 0: return 0
+        if p2 < 0: return 0
+
+        # if the characters match, we count the match and continue
+        if str1[p1] == str2[p2]:
+            return 1 + helper(str1, p1 - 1, str2, p2 - 1)
+
+        # else, we need to find the best between skipping the last character
+        # from each string
+        return max(helper(str1, p1 - 1, str2, p1), helper(str1, p1, str2, p2 - 1))
+
+    return helper(str1, len(str1) - 1, str2, len(str2) - 1)
+
+assert lcs("abcdgh", "aedfhr") == 3
