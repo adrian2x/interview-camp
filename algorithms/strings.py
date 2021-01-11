@@ -10,10 +10,12 @@ def rabin_karp(text: str, search: str, base=127):
     if N < 1 or M < 1 or M > N:
         return -1
 
-    if N < 48: return text.find(search)
-    if text.endswith(search): return N - M
+    if N < 48:
+        return text.find(search)
+    if text.endswith(search):
+        return N - M
 
-    MOD = 1000000007 # prevent overflow (or upcasting)
+    MOD = 1000000007  # prevent overflow (or upcasting)
 
     def rollhash(seq: str, length):
         "Create a hash by adding all characters in the string"
@@ -25,7 +27,7 @@ def rabin_karp(text: str, search: str, base=127):
     # hash the first M characters of text
     hash_text = rollhash(text, M)
     hash_search = rollhash(search, M)
-    coeff = pow(base, M - 1, MOD) # first coefficient
+    coeff = pow(base, M - 1, MOD)  # first coefficient
 
     # check for all sequences of M characters in text
     for i in range(N - M):
@@ -50,25 +52,29 @@ assert rabin_karp("doe are hearing me", " me") == 15
 
 
 def lcs(str1, str2):
-    """ Find the longest common subsequence between two strings:
-    """
+    """Find the longest common subsequence between two strings:"""
     if not str1 or not str2:
         return 0
 
-    def helper(str1, p1, str2, p2):
+    def helper(str1, cur1, str2, cur2):
         # use p1 and p2 to walk the strings backwards
-        if p1 < 0: return 0
-        if p2 < 0: return 0
+        if cur1 < 0:
+            return 0
+        if cur2 < 0:
+            return 0
 
         # if the characters match, we count the match and continue
-        if str1[p1] == str2[p2]:
-            return 1 + helper(str1, p1 - 1, str2, p2 - 1)
+        if str1[cur1] == str2[cur2]:
+            return 1 + helper(str1, cur1 - 1, str2, cur2 - 1)
 
         # else, we need to find the best between skipping the last character
         # from each string
-        return max(helper(str1, p1 - 1, str2, p1), helper(str1, p1, str2, p2 - 1))
+        return max(
+            helper(str1, cur1 - 1, str2, cur1), helper(str1, cur1, str2, cur2 - 1)
+        )
 
     return helper(str1, len(str1) - 1, str2, len(str2) - 1)
+
 
 assert lcs("abcdgh", "aedfhr") == 3
 
@@ -102,7 +108,7 @@ def levenshtein(str1, str2):
     for i in range(1, M + 1):
         # swap the arrays with previous calculations
         curr, prev = prev, curr
-        curr[0] = i # edit distance from empty string
+        curr[0] = i  # edit distance from empty string
         for j in range(1, N + 1):
             # when the characters match, the result is the same as excluding the characters
             if str2[i - 1] == str1[j - 1]:
@@ -118,3 +124,138 @@ def levenshtein(str1, str2):
 
 
 assert levenshtein("benyam", "ephrem") == 5
+
+
+def atoi(s: str) -> int:
+    "Convert a string to integer ignore any leading spaces"
+    max_val = 2147483647
+    min_val = -2147483648
+    ans = 0
+    sign = 1
+    start = 0
+    length = len(s)
+    for i in range(length):
+        if s[i] != " ":
+            break
+        start += 1
+
+    if start < length:
+        if s[start] == "+":
+            sign = 1
+            start += 1
+        elif s[start] == "-":
+            sign = -1
+            start += 1
+    s = s[start:]
+
+    for pos in range(length):
+        ch = s[pos]
+        if not (ch >= "0" and ch <= "9"):
+            break
+
+        ans *= 10
+        ans += ord(ch) - ord("0")
+
+    if ans > max_val and sign == 1:
+        return max_val
+
+    if -ans < min_val and sign == -1:
+        return min_val
+
+    return ans * sign
+
+
+def itoen(num: int):
+    "Return english numerals for a given integer"
+    if num < 0:
+        return ""
+    if num == 0:
+        return "Zero"
+
+    nums = {
+        1: "One",
+        2: "Two",
+        3: "Three",
+        4: "Four",
+        5: "Five",
+        6: "Six",
+        7: "Seven",
+        8: "Eight",
+        9: "Nine",
+        10: "Ten",
+        11: "Eleven",
+        12: "Twelve",
+        13: "Thirteen",
+        14: "Fourteen",
+        15: "Fifteen",
+        16: "Sixteen",
+        17: "Seventeen",
+        18: "Eighteen",
+        19: "Nineteen",
+        20: "Twenty",
+        30: "Thirty",
+        40: "Fourty",
+        50: "Fifty",
+        60: "Sixty",
+        70: "Seventy",
+        80: "Eighty",
+        90: "Ninety",
+        100: "Hundred",
+        1000: "Thousand",
+        1000000: "Million",
+        1000000000: "Billion",
+        1000000000000: "Trillion",
+        1000000000000000: "Quadrillion",
+        1000000000000000000: "Sextillion",
+        1000000000000000000000: "Septillion",
+        1000000000000000000000000: "Octillion",
+    }
+
+    str1 = str(num)
+
+    def groups(str1):
+        "Split the string in groups of three right to left"
+        size = len(str1) - 3
+        while size >= 0:
+            yield str1[size : size + 3]
+            size -= 3
+        if size + 3 > 0:
+            yield str1[: size + 3]
+
+    power = 1
+    result = ""
+    for part in groups(str1):
+        # convert each 3-digit group and append
+        res = ""
+        if len(part) == 1:
+            res += nums[int(part)]
+        elif len(part) == 2:
+            if int(part) in nums:
+                res += nums[int(part)]
+            else:
+                sign = int(part[0])
+                rem = int(part[1])
+                if sign > 0:
+                    res += nums[sign * 10]
+                if rem in nums:
+                    res += " " + nums[rem]
+        else:
+            sign = int(part[0])
+            rem = int(part[1:])
+            if sign > 0:
+                res += nums[sign] + " Hundred"
+            if rem in nums:
+                res += " " + nums[rem]
+            elif rem > 0:
+                res += nums[(rem // 10) * 10]
+                if rem % 10 > 0:
+                    res += " " + nums[rem % 10]
+        # append the current unit
+        if power > 10 and int(part) > 0:
+            res += " " + nums[power]
+        power *= 1000
+        result = res.strip() + " " + result.strip()
+    return result.strip()
+
+
+print(itoen(1111))

@@ -1,7 +1,3 @@
-
-
-
-
 def swap(arr, i, j):
     arr[i], arr[j] = arr[j], arr[i]
 
@@ -18,7 +14,8 @@ class MinHeap:
         return len(self.heap)
 
     def _move_up(self, cur):
-        if cur <= 0: return
+        if cur <= 0:
+            return
         parent = cur // 2
         if self.heap[cur] < self.heap[parent]:
             swap(self.heap, cur, parent)
@@ -80,4 +77,57 @@ def merge_k(blocks):
 
 
 sorted_lists = [[1, 2], [3, 4], [0, 1]]
-assert(merge_k(sorted_lists) == [0, 1, 1, 2, 3, 4])
+assert merge_k(sorted_lists) == [0, 1, 1, 2, 3, 4]
+
+
+from heapq import heappop, heappush
+
+
+def kth_smallest(nums, k):
+    """Find k-th smallest elements in a list"""
+    maxheap = []
+    for n in nums:
+        # put the first k elements in max heap
+        if len(maxheap) < k:
+            heappush(maxheap, -n)
+        # check if the value is less than heap root (max)
+        # and push into heap
+        elif n < -maxheap[0]:
+            heappop(maxheap)
+            heappush(maxheap, n)
+    return -maxheap[0]
+
+
+def sort_character_by_frequency(str1):
+    "Return the string sorted with the most repeated characters first, in lexicographical order"
+    freq = {}
+    for char in str1:
+        if char not in freq:
+            freq[char] = 0
+        freq[char] += 1
+
+    maxheap = []
+    for char, count in freq.items():
+        heappush(maxheap, (-count, char))
+
+    result = []
+    while len(maxheap):
+        entry = heappop(maxheap)
+        result.append(entry)
+
+    ret = ""
+    for count, letter in result:
+        repeat = [letter] * (-count)
+        ret += "".join(repeat)
+
+    return ret
+
+
+print(
+    "String after sorting characters by frequency: "
+    + sort_character_by_frequency("Programming")
+)
+print(
+    "String after sorting characters by frequency: "
+    + sort_character_by_frequency("abcbab")
+)
