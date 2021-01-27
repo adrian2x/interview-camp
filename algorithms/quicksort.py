@@ -6,9 +6,6 @@ QuickSort(A[], start, end)
     QuickSort(A, pivotIndex + 1, end)
 """
 from random import randint
-from multiprocessing.pool import ThreadPool
-from os import cpu_count
-import math
 
 SMALL_ARRAY_SIZE = 47
 
@@ -52,37 +49,26 @@ def qsort(A):
 
 def _qsort(A, start, end):
     if start >= end:
+        # (opt) sort smaller arrays with insertion sort
         return
-
-    # OPT: sort smaller arrays with insertion sort
 
     # partition the array around a random pivot
     pivot = A[randint(start, end)]
-    i, j = start, end
-    while i <= j:
+    left, right = start, end
+    while left <= right:
         # move right while elements are < pivot
-        while A[i] < pivot:
-            i += 1
+        while A[left] < pivot:
+            left += 1
         # move left while elements are > pivot
-        while A[j] > pivot:
-            j -= 1
+        while A[right] > pivot:
+            right -= 1
+        if left > right:
+            break
+        # swap elements in wrong sides of the pivot
+        swap(A, left, right)
+        left += 1
+        right -= 1
 
-        if i <= j:
-            # swap elements in wrong sides of the pivot
-            swap(A, i, j)
-            i += 1
-            j -= 1
-
-    # fat partition: include elements == pivot
-    while i < end and A[i] == pivot:
-        i += 1
-    while j > start and A[j] == pivot:
-        j -= 1
-
-    # OPT: call the smaller side first
-    if start < j:
-        # sort elements < pivot
-        _qsort(A, start, j)
-    if i < end:
-        # sort elements > pivot
-        _qsort(A, i, end)
+    # (opt) call the smaller side first
+    _qsort(A, start, right)
+    _qsort(A, left, end)

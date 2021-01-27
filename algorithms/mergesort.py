@@ -9,21 +9,20 @@ MergeSort(A[], start, end):
 
 
 def mergesort(arr):
-    "MergeSort"
     tmp = list(arr)
     _msort(tmp, arr, 0, len(arr) - 1)
     return arr
 
 
 def _msort(A, tmp, start, end):
-    # OPT: use insertion sort for small slices
     if start >= end:
+        # (opt) use insertion sort for small slices
         return
     mid = (start + end) // 2
-    # OPT: alternate between tmp and A to avoid copying one to the other
+    # (opt) alternate between tmp and A to avoid copying one to the other
     _msort(tmp, A, start, mid)
     _msort(tmp, A, mid + 1, end)
-    # OPT: only run merge if lists not sorted, best case O(N)
+    # (opt) only run merge if lists not sorted, best case O(N)
     if A[mid] > A[mid + 1]:
         _merge(A, tmp, start, mid, end)
 
@@ -37,9 +36,9 @@ def _merge(arr, tmp, i, mid, end):
             tmp[i] = arr[lside]
             lside += 1
             i += 1
-            swaps += rside - (mid + 1)
         else:
-            # this element would have to swap places with the remaining from the left side
+            # swap places with the remaining from the left side
+            swaps += (mid - lside) + 1
             tmp[i] = arr[rside]
             rside += 1
             i += 1

@@ -51,7 +51,7 @@ def floyd_warshall(graph_matrix):
                     # update the path to (i, j) as going through (i, k)
                     path[i][j] = path[i][k]
 
-    # TODO: run the loops again to check for negative cycles
+    # run the loops again to check for negative cycles
     # for k in range(N):
     #     for i in range(N):
     #         for j in range(N):
@@ -64,10 +64,7 @@ def floyd_warshall(graph_matrix):
 
 
 def topsort(vertices, edges):
-    sortedOrder = []
-    if vertices <= 0:
-        return sortedOrder
-
+    ordering = []
     # keep track of nodes in-degree
     inDegree = {i: 0 for i in range(vertices)}
     # initialize the adjacency matrix
@@ -77,23 +74,72 @@ def topsort(vertices, edges):
         graph[start].append(end)
         inDegree[end] += 1  # increment in-degree of end node
 
-    # keep track of sources (nodes with in-degree of zero)
+    # find sources (nodes with in-degree of zero)
     sources = deque()
     for key in inDegree:
         if inDegree[key] == 0:
             sources.append(key)
 
-    # add sources to the order and decrement its neighbors in-degree
     while sources:
+        # add sources to the ordering
         vertex = sources.popleft()
-        sortedOrder.append(vertex)
+        ordering.append(vertex)
+        # decrement neighbors in-degree
         for n in graph[vertex]:
             inDegree[n] -= 1
-            # append child to queue when in-degree is 0
+            # add to queue when in-degree is 0
             if inDegree[n] == 0:
                 sources.append(n)
 
-    # if other nodes remain with in-degree > 0, there is a cycle
-    if len(sortedOrder) != vertices:
-        return []
-    return sortedOrder
+    # if nodes remain with in-degree > 0, there is a cycle
+    # if len(ordering) != vertices: return None
+    return ordering
+
+
+def dfs_path(source, graph, visited, path=[], stack=set()):
+    visited.add(source)
+    stack.add(source)
+    edges = graph.get(source)
+    for dest in edges:
+        if dest not in visited:
+            dfs_path(dest, graph, visited, path, stack)
+        elif dest in stack:
+            raise ValueError("cycle found")
+    path.append(source)
+    stack.remove(source)
+    return path
+
+
+def clone_graph_recursive(node, clones={}):
+    if clones.get(node):
+        return clones[node]
+    copy = Node(node.val)
+    clones[node] = copy
+    for n in node.neighbors:
+        copy.neighbors.append(clone_graph_recursive(n, clones))
+    return copy
+
+
+def clone_graph_iter(node):
+    # Start the queue
+    queue = deque()
+    queue.append(node)
+    seen = {node}
+
+    # Clone the start node
+    clones = {}
+    clones[node.val] = Node(node.val)
+
+    while len(queue) > 0:
+        source = queue.popleft()
+        clone = clones[source.val]
+        # clone the neighbors
+        for dest in source.neighbors:
+            dest_clone = clones.get(dest.val, Node(dest.val))
+            clone.neighbors.append(dest_clone)
+            clones[dest.val] = dest_clone
+            if dest not in seen:
+                seen.add(dest)
+                queue.append(dest)
+
+    return clones[node.val]
