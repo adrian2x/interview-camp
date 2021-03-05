@@ -102,34 +102,6 @@ def second_largest_value(arr):
 second_largest_value([-1, 10, 8, 9, 10, 9, -8, 11])
 
 
-phone_letters = {
-    "2": "ABC",
-    "3": "DEF",
-    "4": "GHI",
-    "5": "JKL",
-    "6": "MNO",
-    "7": "PQRS",
-    "8": "TUV",
-    "9": "WXYZ",
-}
-
-
-def phone_mneumonics(inp, cur=0, seq="", marked={}):
-    if cur == len(inp):
-        print(seq)
-    else:
-        digit = inp[cur]
-        for c in phone_letters[digit]:
-            if not marked.get(c):
-                marked[c] = True
-                phone_mneumonics(inp, cur + 1, seq + c, marked)
-                marked[c] = False
-
-
-phone_mneumonics("23")
-phone_mneumonics("89")
-
-
 def knapsack(weights, profits, capacity):
     nitems = len(profits)
 
