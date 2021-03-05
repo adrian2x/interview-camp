@@ -36,21 +36,6 @@ test = "33"
 print(decode_ways(test, len(test), [None] * (len(test) + 1)))
 
 
-def permutations(search, part=[], curr=0, cast=None):
-    # check for a solution
-    if curr == len(search):
-        return part if cast is None else cast(part)
-    # or insert a new element at each position in curent perm
-    for i in range(len(part) + 1):
-        newperm = list(part)
-        newperm.insert(i, search[curr])
-        permutations(search, newperm, curr + 1, cast)
-
-
-s = "abc"
-permutations(list(s), [], 0, cast=print)
-
-
 def n_matched_parens(n):
     "Generate all possible n-matched parenthesis"
 
@@ -100,34 +85,6 @@ def second_largest_value(arr):
 
 
 second_largest_value([-1, 10, 8, 9, 10, 9, -8, 11])
-
-
-phone_letters = {
-    "2": "ABC",
-    "3": "DEF",
-    "4": "GHI",
-    "5": "JKL",
-    "6": "MNO",
-    "7": "PQRS",
-    "8": "TUV",
-    "9": "WXYZ",
-}
-
-
-def phone_mneumonics(inp, cur=0, seq="", marked={}):
-    if cur == len(inp):
-        print(seq)
-    else:
-        digit = inp[cur]
-        for c in phone_letters[digit]:
-            if not marked.get(c):
-                marked[c] = True
-                phone_mneumonics(inp, cur + 1, seq + c, marked)
-                marked[c] = False
-
-
-phone_mneumonics("23")
-phone_mneumonics("89")
 
 
 def knapsack(weights, profits, capacity):
