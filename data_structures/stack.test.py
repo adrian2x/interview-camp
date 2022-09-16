@@ -19,22 +19,22 @@ print("is_empty(): " + str(stack.is_empty))
 ###################################################
 ##  Queue using two Stacks
 ###################################################
-temp_stack = Stack()
-main_stack = Stack()
+temp_stack = []
+main_stack = []
 
 
 def enqueue(item):
-    main_stack.push(item)
+    main_stack.append(item)
     print(str(item) + " enqueued")
 
 
 def dequeue():
-    if temp_stack.is_empty:
+    if not temp_stack:
         # Transfer all elements to temp stack
-        if main_stack.is_empty:
+        if not main_stack:
             return None
-        while not main_stack.is_empty:
-            temp_stack.push(main_stack.pop())
+        while main_stack:
+            temp_stack.append(main_stack.pop())
     # Pop from temp stack
     last = temp_stack.pop()
     print(str(last) + " dequeued")

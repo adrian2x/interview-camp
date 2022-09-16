@@ -1,4 +1,4 @@
-from collections import deque
+from collections import *
 
 
 def permutations_recursive(items, cur=0, temp=[]):
@@ -56,3 +56,32 @@ def subsets_iterative(items):
             subset = subsets[i] + [current]
             subsets.append(subset)
     return subsets
+
+
+# http://tiny.cc/fixed-queries
+def fixed_len_queries(arr, queries):
+    output = []
+    for size in queries:
+        result = 1e6  # global min
+        window = deque([], size)
+        for (i, n) in enumerate(arr):
+            # discard previous max in the window
+            while window and window[-1][0] < n:
+                window.pop()
+
+            # index for checking if item is out of the window
+            window.append((n, i))
+
+            # update elements leaving the window
+            while window and window[0][1] <= i - size:
+                window.popleft()
+
+            # update global min if window is full
+            if i >= size - 1:
+                result = min(result, window[0][0])
+
+        output.append(result)
+    return output
+
+
+print(fixed_len_queries([2, 3, 4, 5, 6], [2, 3]))
