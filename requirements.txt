@@ -22,7 +22,7 @@ python-dateutil==2.8.1
 pyzmq==19.0.2
 six==1.15.0
 toml==0.10.2
-tornado==6.0.4
+tornado==6.3.2
 traitlets==5.0.4
 wcwidth==0.2.5
 wrapt==1.12.1
