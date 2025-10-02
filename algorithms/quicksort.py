@@ -5,6 +5,7 @@ QuickSort(A[], start, end)
     QuickSort(A, start, pivotIndex)
     QuickSort(A, pivotIndex + 1, end)
 """
+
 from random import randint
 
 SMALL_ARRAY_SIZE = 47
@@ -55,19 +56,19 @@ def _qsort(A, start, end):
     # partition the array around a random pivot
     pivot = A[randint(start, end)]
     left, right = start, end
-    while left <= right:
+    while left < right:
         # move right while elements are < pivot
         while A[left] < pivot:
             left += 1
         # move left while elements are > pivot
         while A[right] > pivot:
             right -= 1
-        if left > right:
-            break
-        # swap elements in wrong sides of the pivot
-        swap(A, left, right)
-        left += 1
-        right -= 1
+
+        if left <= right:
+            # swap elements in wrong sides of the pivot
+            swap(A, left, right)
+            left += 1
+            right -= 1
 
     # (opt) call the smaller side first
     _qsort(A, start, right)

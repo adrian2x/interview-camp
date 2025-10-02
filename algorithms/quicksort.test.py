@@ -9,7 +9,6 @@ import random
 from collections import deque
 
 
-
 from quicksort import qsort, _qsort
 
 
@@ -17,8 +16,8 @@ array = [3, 7, 8, 5, 2, 1, 9, 5, 4]
 qsort(array)
 assert sorted(array) == array
 
-for i in range(0, 100):
-    array = [randint(0, 1000) for i in range(100)]
+for i in range(0, 10000):
+    array = [randint(0, 10000) for i in range(100)]
     qsort(array)
     assert sorted(array) == array
 
@@ -33,7 +32,6 @@ def paralell_qsort(A):
         while len(queue) > 0:
             fut = queue.pop()
             fut.result()
-
 
 
 def pqsort(A, low, high, pool, queue, threshold=47):
