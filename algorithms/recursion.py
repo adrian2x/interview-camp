@@ -1,13 +1,18 @@
-def permutations(choices, pos=0, prev=[]):
+def permutations(values, pos=0, prev=[]):
     # check for solution
-    if len(prev) == len(choices):
+    if pos == len(values):
         yield prev
     else:
         for i in range(len(prev) + 1):
             # insert a new item into every position
             newperm = list(prev)
-            newperm.insert(i, choices[pos])
-            yield from permutations(choices, pos + 1, newperm)
+            newperm.insert(i, values[pos])
+            yield from permutations(values, pos + 1, newperm)
+
+
+print("permutations:")
+for p in permutations("abc"):
+    print(p)
 
 
 def subsets(choices):
@@ -25,6 +30,7 @@ def subsets(choices):
     return results
 
 
+print("subsets:")
 print(subsets("abc"))
 
 
@@ -49,5 +55,6 @@ def phone_mneumonics(inp, cur=0, output=""):
             phone_mneumonics(inp, cur + 1, output + letter)
 
 
+print("mneumonics:")
 phone_mneumonics("234")
 phone_mneumonics("89")

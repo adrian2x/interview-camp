@@ -2,7 +2,7 @@ from collections import *
 
 
 def permutations_recursive(items, cur=0, temp=[]):
-    "O(N!) permutations with O(N) memory each = O(N*N!)"
+    "O(N!) permutations with O(N) stack frames each = O(N*N!)"
     if cur == len(items):  # check if solution
         yield temp
     else:
@@ -11,7 +11,6 @@ def permutations_recursive(items, cur=0, temp=[]):
             permutation = list(temp)
             permutation.insert(index, items[cur])
             yield from permutations_recursive(items, cur + 1, permutation)
-            # note this is tail recursive!
 
 
 def permutations_iterative(items):
@@ -50,8 +49,8 @@ def subsets_iterative(items):
     subsets = [[]]  # empty set (base case)
     for current in items:
         # go through the previous subsets
-        current_len = len(subsets)
-        for i in range(current_len):
+        n = len(subsets)
+        for i in range(n):
             # create a new subset by adding a new element
             subset = subsets[i] + [current]
             subsets.append(subset)
@@ -64,7 +63,7 @@ def fixed_len_queries(arr, queries):
     for size in queries:
         result = 1e6  # global min
         window = deque([], size)
-        for (i, n) in enumerate(arr):
+        for i, n in enumerate(arr):
             # discard previous max in the window
             while window and window[-1][0] < n:
                 window.pop()
