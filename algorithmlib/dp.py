@@ -29,33 +29,16 @@ The direction of the inner loop is not a detail: *downward* for 0/1 problems
 (each item used at most once, so a row must not see its own update), *upward*
 for unbounded problems (reusing an item is exactly what we want).
 
-Sequences are generic: LCS / longest_common_substring mirror the container
-of their first argument, so they work on str, bytes, list and tuple alike.
+Sequences are generic: the sequence functions accept any comparable
+elements. The LCS and longest-common-substring results are always lists;
+join at the call site if you want a string (e.g. "".join(result)).
 """
 
 from bisect import bisect_left
 from collections.abc import Sequence
-from typing import List, Tuple, TypeVar, Union
+from typing import List, TypeVar
 
 T = TypeVar("T")  # element type of the input sequences
-
-
-def _wrap_like(
-    model: Sequence, parts: List[T]
-) -> Union[str, List[T], Tuple[T, ...]]:
-    """
-    Rebuild a result slice in the container style of `model`, so the sequence
-    functions give back the same kind of object they were handed. (The DP may
-    internally swap its working copies, so the caller's first argument is
-    remembered as `model` and passed here.)
-    """
-    if isinstance(model, str):
-        return "".join(parts)  # type: ignore[arg-type, return-value]
-    if isinstance(model, bytes):
-        return bytes(parts)  # type: ignore[arg-type, return-value]
-    if isinstance(model, tuple):
-        return tuple(parts)
-    return parts
 
 
 def fibonacci(n: int) -> int:
@@ -253,13 +236,13 @@ def coin_change_min(coins: Sequence[int], amount: int) -> int:
 
 def longest_common_subsequence(
     a: Sequence[T], b: Sequence[T]
-) -> Union[str, List[T], Tuple[T, ...]]:
+) -> List[T]:
     """
     Return one longest common subsequence of a and b - the longest sequence
     of elements obtainable from both inputs by deleting elements (order
-    preserved, contiguity not required). The result mirrors a's container:
-    str in, str out; list in, list out; tuple in, tuple out. Returns the
-    empty container when nothing is shared.
+    preserved, contiguity not required). Returns the empty list when nothing
+    is shared; the result is always a list, so join it for string inputs:
+    "".join(longest_common_subsequence(a, b)).
 
     Classic DP: dp[i][j] = LCS length of a[:i] and b[:j]. The recurrence
     reads off the last elements:
@@ -273,11 +256,11 @@ def longest_common_subsequence(
 
     Time: O(m * n).  Space: O(m * n). (If only the *length* is needed, two
     rolling rows suffice - see edit_distance below. Reconstructing the
-    sequence itself in linear space is possible too, via Hirschberg's
-    divide-and-conquer variant.)
+    sequence itself requires keeping the full table: reading the answer back
+    costs O(m * n) space.)
 
     Example:
-        >>> longest_common_subsequence("ABCBDAB", "BDCABA")
+        >>> "".join(longest_common_subsequence("ABCBDAB", "BDCABA"))
         'BCBA'
     """
     m, n = len(a), len(b)
@@ -306,16 +289,16 @@ def longest_common_subsequence(
             j -= 1  # the optimum came from the left: skip b[j-1]
     result.reverse()
 
-    return _wrap_like(a, result)
+    return result
 
 
 def longest_common_substring(
     a: Sequence[T], b: Sequence[T]
-) -> Union[str, List[T], Tuple[T, ...]]:
+) -> List[T]:
     """
     Return one longest substring (contiguous run of elements) common to a
-    and b. Mirrors a's container, as longest_common_subsequence does; the
-    empty container means no common element at all.
+    and b, as a list; the empty list means no common element at all. Join the
+    result for string inputs: "".join(longest_common_substring(a, b)).
 
     The DP table tracks, for each pair of positions (i, j), the length of
     the common run *ending* at a[i-1] and b[j-1]:
@@ -333,17 +316,16 @@ def longest_common_substring(
     Time: O(m * n).  Space: O(min(m, n)) via rolling rows.
 
     Example:
-        >>> longest_common_substring("abcde", "zbcdf")
+        >>> "".join(longest_common_substring("abcde", "zbcdf"))
         'bcd'
     """
-    model = a  # the container style to mirror in the result
-    if len(a) < len(b):
-        # The DP is symmetric, so feed it whichever orientation gives the
-        # narrower rows: b should be the shorter sequence.
+    if len(b) > len(a):
+        # The DP is symmetric, so orient it with the shorter sequence in
+        # `b`: the rolling rows then run over the shorter input.
         a, b = b, a
     m, n = len(a), len(b)
     if m == 0 or n == 0:
-        return _wrap_like(model, [])
+        return []
 
     best_len = 0
     best_end = 0  # 1-based exclusive end of the best run inside a
@@ -360,7 +342,7 @@ def longest_common_substring(
                     best_end = i
         prev = cur
 
-    return _wrap_like(model, list(a[best_end - best_len : best_end]))
+    return list(a[best_end - best_len : best_end])
 
 
 def edit_distance(a: Sequence[T], b: Sequence[T]) -> int:

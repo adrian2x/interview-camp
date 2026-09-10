@@ -155,7 +155,8 @@ def dijkstra(
 ) -> Dict[Node, Number]:
     """
     Return the shortest distances from source to every node in graph, using
-    Dijkstra's algorithm. Raises ValueError if any edge weight is negative.
+    Dijkstra's algorithm. Raises ValueError if an edge reachable from source
+    has negative weight (unreachable negative edges are never inspected).
 
     Dijkstra is Bellman-Ford's fast cousin for the (very common) case of
     non-negative weights. Instead of blindly relaxing every edge V - 1 times,
@@ -175,13 +176,14 @@ def dijkstra(
     node popped as closest could later be improved by a path through a node
     that is still far away - breaking the finalization argument above.
 
-    Complexity note: the binary heap used here gives O(E log V). A Fibonacci
-    heap lowers it to O(E + V log V) - the textbook optimum, rarely worth the
-    constant factors in practice.
+    Complexity note: the lazy binary heap used here gives O(E log E) (Sedgewick
+    states E log E for this form; O(E log V) on simple graphs, since
+    log E <= 2 log V). A Fibonacci heap lowers it to O(E + V log V) - the
+    textbook optimum, rarely worth the constant factors in practice.
 
     Distances to unreachable nodes stay float("inf").
 
-    Time: O(E log V).  Space: O(V).
+    Time: O(E log E).  Space: O(V).
 
     Example:
         >>> dijkstra({"A": [("B", 4), ("C", 2)], "B": [("C", 1)]}, source="A")
@@ -192,14 +194,15 @@ def dijkstra(
     dist: Dict[Node, Number] = {node: float("inf") for node in adj}
     dist[source] = 0
 
-    # Heap entries are (distance, ticket, node). The ticket is a running
-    # counter: when two distances tie, the heap falls back to comparing
-    # tickets instead of node labels, so labels never need to be orderable.
+    # Heap entries are (distance, counter, node). The counter is a running
+    # ticket (heapq docs call it the "entry count"): when two distances tie,
+    # the heap compares counters instead of node labels, so labels never need
+    # to be orderable.
     queue: List[Tuple[Number, int, Node]] = [(0, 0, source)]
-    ticket = 0
+    counter = 0
 
     while queue:
-        d, _ticket, u = heappop(queue)
+        d, _count, u = heappop(queue)
         if d > dist[u]:
             continue  # stale entry: u was improved after this one was pushed
 
@@ -209,8 +212,8 @@ def dijkstra(
             candidate = d + w
             if candidate < dist[v]:
                 dist[v] = candidate  # a shorter route to v was found
-                ticket += 1
-                heappush(queue, (candidate, ticket, v))
+                counter += 1
+                heappush(queue, (candidate, counter, v))
     return dist
 
 
@@ -235,8 +238,12 @@ def floyd_warshall(
 
     and since the in-place update never needs yesterday's d[k][*] after node k
     has been processed, the whole thing collapses into three nested loops
-    over a single matrix. Running the recurrence for k = 0..n-1 allows every
-    node as an intermediate, so the final matrix holds true shortest paths.
+    over a single matrix. (Why in place is safe: row k and column k never
+    change while k is the pivot - a shortest path that touches k uses it only
+    once - so entries can be overwritten without corrupting the values the
+    recurrence still needs.) Running the recurrence for k = 0..n-1 allows
+    every node as an intermediate, so the final matrix holds true shortest
+    paths.
 
     A negative cycle reveals itself at the end: dist[i][i] < 0 for some i
     (the cycle keeps shortening its own round trip).
@@ -257,10 +264,8 @@ def floyd_warshall(
         for i in range(n):
             row_i = dist[i]
             best_i_k = row_i[k]
-            # Optimization: if i cannot reach k yet, no path through k can
-            # improve i's row - skip the whole inner loop. (This is the
-            # standard "only relax reachable prefixes" shortcut; it also
-            # avoids pointless inf + inf arithmetic.)
+            # Common guard (not part of the textbook triple loop): if i
+            # cannot reach k, no path through k can shorten row i - skip it.
             if best_i_k == float("inf"):
                 continue
             for j in range(n):
@@ -465,7 +470,7 @@ def prim_mst(
     optimal. Prim differs from Kruskal in shape (one growing blob vs merging
     components) and in cost (better on dense graphs with the right queue).
 
-    Time: O(E log V).  Space: O(V).
+    Time: O(E log E) with the lazy heap (Sedgewick's LazyPrimMST). Space: O(V).
 
     Example:
         >>> prim_mst({0: [(1, 4), (2, 3)], 1: [(0, 4), (2, 1)],
@@ -482,25 +487,25 @@ def prim_mst(
         raise ValueError(f"start node {start!r} is not in the graph")
 
     in_tree = {start}
-    # Heap entries (weight, ticket, from_node, to_node); the ticket keeps
+    # Heap entries (weight, counter, from_node, to_node); the counter keeps
     # equal-weight entries from comparing node labels (see dijkstra).
     heap: List[Tuple[Number, int, Node, Node]] = []
-    ticket = 0
+    counter = 0
     for neighbour, w in adj[start]:
-        heappush(heap, (w, ticket, start, neighbour))
-        ticket += 1
+        heappush(heap, (w, counter, start, neighbour))
+        counter += 1
 
     mst: List[Tuple[Node, Node, Number]] = []
     while heap and len(in_tree) < len(nodes):
-        w, _t, u, v = heappop(heap)
+        w, _count, u, v = heappop(heap)
         if v in in_tree:
             continue  # v joined meanwhile: this edge is now internal
         in_tree.add(v)
         mst.append((u, v, w))
         for neighbour, w2 in adj[v]:
             if neighbour not in in_tree:
-                heappush(heap, (w2, ticket, v, neighbour))
-                ticket += 1
+                heappush(heap, (w2, counter, v, neighbour))
+                counter += 1
 
     if len(in_tree) != len(nodes):
         raise ValueError("graph is disconnected: no spanning tree exists")
@@ -556,15 +561,16 @@ def is_bipartite(graph: Mapping[Node, Sequence[Node]]) -> Optional[Dict[Node, in
         True
     """
     color: Dict[Node, int] = {}
+    adj = _expand_unweighted(graph)  # also provides every mentioned node
     # Iterate over every node so disconnected components are handled too.
-    for start in _expand_unweighted(graph):
+    for start in adj:
         if start in color:
             continue
         color[start] = 0
         queue = deque([start])
         while queue:
             u = queue.popleft()
-            for v in graph.get(u, ()):
+            for v in adj[u]:
                 if v not in color:
                     color[v] = 1 - color[u]  # neighbour takes the other color
                     queue.append(v)
@@ -602,6 +608,11 @@ def strongly_connected_components(
     reach everywhere in it, while edges between components now point the
     wrong way to escape.
 
+    Implementation note: both passes are iterative (an explicit stack with
+    enter/exit markers) rather than recursive, because Python caps recursion
+    at ~1000 frames and a 1000-node chain would overflow. The markers are how
+    the iterative form records each node's DFS finish time.
+
     Time: O(V + E).  Space: O(V).
 
     Example:
@@ -615,8 +626,7 @@ def strongly_connected_components(
         for v in neighbours:
             reverse[v].append(u)
 
-    # Pass 1: finish times on the original graph (iterative DFS so deep
-    # graphs cannot overflow the call stack).
+    # Pass 1: finish times on the original graph (iterative; see docstring).
     visited = set()
     finish_order: List[Node] = []
     for start in adj:
@@ -694,6 +704,9 @@ def edmonds_karp(
     O(V * E^2) below.
 
     Time: O(V * E^2).  Space: O(V + E) for the residual graph.
+
+    Input note: parallel edges between the same ordered pair sum their
+    capacities (the flow problem is about total capacity, not edge identity).
 
     Example:
         >>> graph = {0: [(1, 3), (2, 2)], 1: [(2, 1), (3, 2)],

@@ -12,10 +12,10 @@ callers - an empty list means "not found".
     z_search(text, pattern)            the Z-array of pattern + sep + text
 
 None of them are restricted to str. Because they only ever need equality of
-elements (plus, for rabin_karp, hashability), they work on any sequence of
-hashable elements: text and pattern may be str, bytes, tuples, or lists -
-matching a tuple of tokens against a longer tuple works exactly like matching
-letters in a word. Try it:
+elements (plus hashability for the hash-based methods: Rabin-Karp's rolling
+hash and the Boyer-Moore shift table), they work on any sequence: text and
+pattern may be str, bytes, tuples, or lists - matching a tuple of tokens
+against a longer tuple works exactly like matching letters in a word. Try it:
 
     >>> from algorithmlib.strings import kmp_search
     >>> kmp_search((1, 2, 1, 2, 3), (1, 2))
@@ -38,7 +38,7 @@ strategy is a reusable idea:
   text. It has the best average case in practice - which is why grep and
   modern text editors use its descendants.
 
-Three further classics round the module out:
+Four more classical entries round the module out:
 
 * `z_function` computes, for every position, how long the text matches its
   own prefix there - the linear-time Z-array, KMP's mirror-image cousin.
@@ -59,33 +59,39 @@ footgun); a non-empty pattern in an empty or shorter text returns [].
 from collections.abc import Hashable, Sequence
 from typing import Any, List, Tuple, TypeVar
 
-T = TypeVar("T", bound=Hashable)  # pattern/text element type
+T = TypeVar("T")  # any sequence element type (equality is enough)
+H = TypeVar("H", bound=Hashable)  # elements that can be hashed (hash-based methods)
 
 
 # ---------------------------------------------------------------------------
 # Rabin-Karp: rolling hash search
 # ---------------------------------------------------------------------------
 
-# Rolling arithmetic is done modulo 2^64 (machine-word arithmetic, like C's
-# size_t overflow): products stay small and the `& _MASK` after every step is
-# both cheaper and easier to reason about than `% prime`. 2^64 and the base
-# below are coprime, which keeps the hash function well-distributed.
+# Rolling arithmetic is done modulo 2^64 - unsigned machine-word arithmetic,
+# the same thing C does implicitly on size_t overflow. The base is odd, so it
+# is coprime to the modulus and the polynomial hash stays well distributed.
+# (CLRS and Sedgewick use a large - often random - prime modulus instead;
+# both choices are fine in an interview, just be ready to say why. A masked
+# modulus is only risky for *unverified* hashing: crafted collisions can slow
+# it down, but every hit here is verified, so worst case is time, never
+# correctness.)
 #
 # The hash itself is polynomial: h = x[0]*B^(m-1) + x[1]*B^(m-2) + ... + x[m-1],
 # built incrementally as h = h*B + x. That shape is what allows the O(1)
 # slide below. Note that Python's hash() is salted per process for strings,
 # so hash values differ between runs - slightly different collision patterns,
 # but identical (always-correct) results, because collisions are verified.
-_MASK = (1 << 64) - 1
-_BASE = 1_000_003  # an odd constant > any realistic element-hash difference
+_MOD = 1 << 64
+_MASK = _MOD - 1
+_BASE = 1_000_003  # odd, so coprime with 2^64; also CPython's hash multiplier
 
 
-def _hashing(element: T) -> int:
-    """Map any hashable element to a 64-bit value for the rolling hash."""
+def _hashing(element: H) -> int:
+    """Map a hashable element to a 64-bit value for the rolling hash."""
     return hash(element) & _MASK
 
 
-def _rolling_hash(seq: Sequence[T]) -> int:
+def _rolling_hash(seq: Sequence[H]) -> int:
     """Hash seq the way the window hash is built: h = h * base + element."""
     h = 0
     for element in seq:
@@ -93,7 +99,7 @@ def _rolling_hash(seq: Sequence[T]) -> int:
     return h
 
 
-def rabin_karp(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
+def rabin_karp(text: Sequence[H], pattern: Sequence[H]) -> List[int]:
     """
     Return the start indices of every (possibly overlapping) occurrence of
     pattern in text, using the Rabin-Karp rolling-hash algorithm.
@@ -116,6 +122,9 @@ def rabin_karp(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
     triggers); worst case O(n*m) when hash collisions are frequent (e.g. all
     elements equal). Space: O(1) beyond the inputs.
 
+    Inputs must be sliceable sequences (str, bytes, list, tuple all are):
+    the final verification compares slices, not individual elements.
+
     Example:
         >>> rabin_karp("doe are hearing me", "ear")
         [9]
@@ -125,14 +134,14 @@ def rabin_karp(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
     if not pattern:
         raise ValueError("pattern must not be empty")
     n, m = len(text), len(pattern)
-    if n < m or n == 0:
+    if n < m:
         return []
 
     pattern_hash = _rolling_hash(pattern)
     window_hash = _rolling_hash(text[:m])
 
     # Weight of the character about to leave the window: base^(m-1).
-    highest = pow(_BASE, m - 1, 1 << 64)
+    highest = pow(_BASE, m - 1, _MOD)
 
     matches: List[int] = []
 
@@ -236,7 +245,7 @@ def kmp_search(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
     if not pattern:
         raise ValueError("pattern must not be empty")
     n, m = len(text), len(pattern)
-    if n < m or n == 0:
+    if n < m:
         return []
 
     pi = prefix_function(pattern)
@@ -260,7 +269,7 @@ def kmp_search(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
 # ---------------------------------------------------------------------------
 
 
-def boyer_moore_horspool(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
+def boyer_moore_horspool(text: Sequence[H], pattern: Sequence[H]) -> List[int]:
     """
     Return the start indices of every occurrence of pattern in text using the
     Boyer-Moore-Horspool algorithm.
@@ -294,7 +303,7 @@ def boyer_moore_horspool(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
     if not pattern:
         raise ValueError("pattern must not be empty")
     n, m = len(text), len(pattern)
-    if n < m or n == 0:
+    if n < m:
         return []
 
     # Bad-character shift table: how far the window may jump when its last
@@ -378,23 +387,6 @@ def z_function(seq: Sequence[T]) -> List[int]:
     return z
 
 
-class _Separator:
-    """
-    A sentinel element that equals nothing but itself. Used by z_search to
-    join pattern and text into one sequence: because the sentinel appears
-    once and never equals a real element, no Z-match can cross the boundary
-    between pattern and text.
-    """
-
-    __slots__ = ()
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, _Separator)
-
-    def __hash__(self) -> int:
-        return hash(_Separator)
-
-
 def z_search(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
     """
     Return the start indices of every occurrence of pattern in text, using
@@ -407,9 +399,10 @@ def z_search(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
     can run past the pattern's end (it never equals a real element), so
     z[i] == len(pattern) means precisely "the pattern starts at i".
 
-    For str inputs a rare control character is used as the separator; for
-    other sequences an object sentinel is spliced in. Text is never re-read
-    more than once overall, matching KMP's linear guarantee.
+    The separator is a sentinel object that equals nothing but itself - the
+    object analogue of the '#' separator used in textbook Z-search. One code
+    path covers str and non-str inputs, and text is never re-read more than
+    once overall, matching KMP's linear guarantee.
 
     Time: O(n + m).  Space: O(n + m).
 
@@ -422,22 +415,13 @@ def z_search(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
     if not pattern:
         raise ValueError("pattern must not be empty")
     n, m = len(text), len(pattern)
-    if n < m or n == 0:
+    if n < m:
         return []
 
-    if isinstance(text, str):
-        # Pick a control character absent from both inputs (virtually always
-        # the first candidate).
-        for sep in "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0b\x0c":
-            if sep not in text and sep not in pattern:
-                separator: Any = sep
-                break
-        else:  # pragma: no cover - would need pathological input
-            raise ValueError("could not find a separator character")
-        combined = pattern + separator + text
-    else:
-        separator = _Separator()
-        combined = list(pattern) + [separator] + list(text)
+    # The sentinel appears exactly once, so it can never equal a real element
+    # and no Z-match can cross from the text into the pattern.
+    separator = object()
+    combined: List[Any] = list(pattern) + [separator] + list(text)
 
     z = z_function(combined)
     matches: List[int] = []
@@ -451,23 +435,6 @@ def z_search(text: Sequence[T], pattern: Sequence[T]) -> List[int]:
 # ---------------------------------------------------------------------------
 # Manacher: longest palindromic substring in linear time
 # ---------------------------------------------------------------------------
-
-
-class _Barrier:
-    """
-    A sentinel that equals other barriers and nothing else. Manacher splices
-    barriers between every element (and at both ends) so that every possible
-    palindrome - even or odd length - has a single, odd-length representation
-    centered on a real element or a barrier.
-    """
-
-    __slots__ = ()
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, _Barrier)
-
-    def __hash__(self) -> int:
-        return hash(_Barrier)
 
 
 def manacher(seq: Sequence[T]) -> Tuple[int, int]:
@@ -505,7 +472,12 @@ def manacher(seq: Sequence[T]) -> Tuple[int, int]:
     if n == 0:
         return (0, 0)
 
-    barrier = _Barrier()
+    # A single sentinel object spliced between every pair of elements (and at
+    # both ends): it equals only itself, so sentinel-vs-element comparisons
+    # always fail while sentinel-vs-sentinel always succeeds. That makes every
+    # palindrome of the original - even or odd length - an odd-length
+    # palindrome of `expanded`, centered on an element or a sentinel.
+    barrier = object()
     # expanded: barrier, seq[0], barrier, seq[1], ..., barrier (2n + 1 slots)
     expanded: List[Any] = [barrier]
     for element in seq:
@@ -513,7 +485,7 @@ def manacher(seq: Sequence[T]) -> Tuple[int, int]:
         expanded.append(barrier)
 
     radii = [0] * len(expanded)  # radii[i] = palindrome radius around i
-    center = right = 0  # the palindrome reaching furthest right so far
+    center = right = 0  # rightmost-reaching palindrome so far (right exclusive)
     best_radius = 0
     best_center = 0
 
@@ -557,8 +529,8 @@ def hamming_distance(a: Sequence[T], b: Sequence[T]) -> int:
     which is why it suits fixed-length data (codewords, DNA barcodes of the
     same length, binary fingerprints) but not free-form prose, where edit
     distance (see algorithmlib.dp.edit_distance) is the right tool. The
-    elements only need to support equality, so ints, tuples and any
-    hashable-bearing sequences work.
+    elements only need to support equality, so ints, tuples and any sequence
+    of comparable values work (hashability is not required).
 
     Time: O(n).  Space: O(1).
 

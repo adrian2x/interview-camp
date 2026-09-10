@@ -41,8 +41,8 @@ def _swap(items: MutableSequence[T], i: int, j: int) -> None:
 # divide-and-conquer: the recursion/partition overhead dominates below ~16
 # elements, and insertion sort touches the elements in a cache-friendly
 # linear sweep. This is the classic quicksort/mergesort "hybrid" cutoff -
-# values anywhere in the 8-32 range behave similarly (CPython uses 64 for
-# timsort's binary-insertion runs; the classic literature uses 5-20).
+# values anywhere in the 8-32 range behave similarly (CPython's timsort picks
+# a minrun between 32 and 64; Sedgewick suggests 5-15 for quicksort).
 _INSERTION_CUTOFF = 16
 
 
@@ -191,8 +191,8 @@ def _msort(
     # smallest of the right half, the two halves are globally sorted and the
     # merge can be skipped. This is what gives merge sort its O(n) best case
     # on already-sorted input.
-    if items[mid - 1] > items[mid]:
-        _merge_into(items, lo, mid, hi, buffer)
+    if items[mid] < items[mid - 1]:  # strict `<`: keeps the module's
+        _merge_into(items, lo, mid, hi, buffer)  # <only comparison contract
 
 
 def merge_sort(items: MutableSequence[T]) -> MutableSequence[T]:
@@ -243,10 +243,9 @@ def _median3_pivot(items: MutableSequence[T], lo: int, hi: int) -> T:
     """
     mid = lo + (hi - lo - 1) // 2  # the middle index of the region
 
-    # A 3-element sorting network: three compare-and-swap steps order the
-    # values at lo, mid and hi - 1 so that items[lo] <= items[mid] <=
-    # items[hi-1], using only `<` comparisons (all the element type must
-    # provide - never `<=`).
+    # Three compare-and-swaps order the values at lo, mid and hi - 1 so that
+    # items[lo] <= items[mid] <= items[hi-1], using only `<` comparisons
+    # (the only operator the element type must provide - never `<=`).
     if items[mid] < items[lo]:
         _swap(items, lo, mid)
     if items[hi - 1] < items[lo]:
@@ -269,7 +268,11 @@ def _partition(items: MutableSequence[T], lo: int, hi: int) -> int:
 
         items[lo:p]   <= pivot
         items[p]       == pivot
-        items[p+1:hi]  >= pivot
+        items[p+1:hi]  > pivot       (all equals land left of p)
+
+    The strictly-greater right zone is what makes a region of equal values
+    degenerate one element at a time - the duplicate-heavy caveat noted on
+    quicksort and quickselect.
 
     The loop invariant: after processing position j, everything in
     items[lo:i] is <= pivot (the "small zone") and everything in
@@ -331,9 +334,11 @@ def quicksort(items: MutableSequence[T]) -> MutableSequence[T]:
     """
     Sort items in place with quicksort, and return items.
 
-    Quicksort is the workhorse of the real world (C's qsort, and the
-    partition step inside many libraries) because it sorts *in place* with no
-    auxiliary buffer and, on average, fewer comparisons than merge sort.
+    Quicksort is the workhorse of the real world (the algorithm C's qsort is
+    named for, and the partition step inside many libraries) because it sorts
+    *in place* with no auxiliary buffer and moves data far less than merge
+    sort - even though its average comparison count is higher (about
+    2 n ln n versus merge sort's n lg n; Sedgewick's algs4 gives both).
 
     How it works: pick a pivot, partition the region so everything smaller
     than the pivot sits left of it and everything larger sits right (the
@@ -414,7 +419,9 @@ def heapsort(items: MutableSequence[T]) -> MutableSequence[T]:
     Phase 1 - build the heap in O(n): the leaves (indices >= n // 2) are
     already valid heaps of size 1, so sift down every internal node from the
     bottom up. The classic "why is heapify O(n) not O(n log n)?" argument:
-    most nodes sit near the leaves and sift only a few levels.
+    there are about n/2^(h+1) nodes at height h, each sifting down at most h
+    levels, and summing h/2^h over all levels converges to a constant - most
+    nodes sit near the leaves and do almost no work.
 
     Phase 2 - extract maxima: repeatedly swap the heap's maximum (at index 0)
     with the last element, shrink the heap by one, and sift the new root
@@ -453,10 +460,11 @@ def _minrun(n: int) -> int:
     """
     Choose a minimum run length for timsort.
 
-    CPython's heuristic: pick minrun so that n / minrun is a power of two
-    (or just under one), which makes the later pairwise merges as balanced
-    as possible. The bit trick computes this in one pass: shift n right
-    until it is below 64, keeping the discarded low bits in r.
+    CPython's heuristic (merge_compute_minrun in Objects/listobject.c, and
+    Tim Peters' listsort.txt): pick minrun so that n / minrun is a power of
+    two (or just under one), which makes the later pairwise merges as
+    balanced as possible. The bit trick computes this in one pass: shift n
+    right until it is below 64, keeping the discarded low bits in r.
     """
     r = 0
     while n >= 64:
@@ -469,8 +477,10 @@ def _binary_insert(items: MutableSequence[T], lo: int, hi: int) -> None:
     """
     Insertion-sort items[lo:hi] assuming items[lo] starts an already-sorted
     run. Each element is located with a binary search over the sorted prefix
-    instead of a linear scan (the trick that gives timsort its edge over
-    plain insertion sort on long runs).
+    instead of a linear scan: the insertion point costs O(log k) comparisons
+    per element rather than O(k), though the shifting itself is still O(k)
+    (that comparison count is what matters when comparing elements is
+    expensive).
     """
     for i in range(lo + 1, hi):
         value = items[i]
@@ -574,11 +584,16 @@ def timsort(items: MutableSequence[T]) -> MutableSequence[T]:
         i = 0
         while i + 2 < len(boundaries):
             lo, mid, hi = boundaries[i], boundaries[i + 1], boundaries[i + 2]
-            _merge_into(items, lo, mid, hi, buffer)
+            # Skip the merge when the two runs are already in order (same
+            # shortcut as _msort; concatenation of ordered runs is ordered).
+            if items[mid] < items[mid - 1]:
+                _merge_into(items, lo, mid, hi, buffer)
             merged.append(hi)  # runs i and i+1 are now one run ending at hi
             i += 2
-        if i + 1 == len(boundaries) - 1:
-            merged.append(boundaries[-1])  # odd run out: carry it over
+        if i == len(boundaries) - 2:
+            # The loop exits with i at the first run without a merge partner;
+            # a single trailing run is carried to the next pass.
+            merged.append(boundaries[-1])
         boundaries = merged
 
     return items
@@ -611,10 +626,10 @@ def quickselect(items: MutableSequence[T], k: int) -> T:
     the usual triggers; a randomized pivot removes the adversarial case).
     Space: O(1) - the recursion is tail-loop shaped, as in _qsort.
 
-    Guaranteed-linear alternative: the median-of-medians pivot selection
-    ("BFPRT") chooses a pivot provably good enough to force O(n) even in the
+    Guaranteed-linear alternative: median of medians (Blum-Floyd-Pratt-
+    Rivest-Tarjan, CLRS 9.3) picks a pivot provably good enough to force O(n)
     worst case, at a large constant-factor cost - which is why practical
-    implementations stick with the randomized/median-of-three versions.
+    implementations stick with randomized or median-of-three pivots.
 
     Example:
         >>> quickselect([5, 2, 9, 1, 7], k=2)   # the 3rd smallest value

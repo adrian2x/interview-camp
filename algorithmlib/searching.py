@@ -29,7 +29,7 @@ Everything here works on any sorted *sequence* (list, tuple, range, ...) of
 mutually comparable values. If the collection is not sorted, the results are
 meaningless - binary search can only *exploit* order, it cannot create it.
 
-Why three functions instead of one? Interviewers love asking for "first
+Why several functions instead of one? Interviewers love asking for "first
 occurrence" / "last occurrence" / "insertion point" variants of binary search.
 `lower_bound` and `upper_bound` answer all of those questions with one piece
 of reasoning: they are the C++-style std::lower_bound / std::upper_bound, and
@@ -40,6 +40,34 @@ from collections.abc import Sequence
 from typing import Optional, TypeVar
 
 T = TypeVar("T")  # a comparable element type
+
+
+def _lower_bound_range(
+    items: Sequence[T], target: T, lo: int, hi: int
+) -> int:
+    """
+    Shared binary-search kernel: in items[lo:hi], return the index of the
+    first element >= target, or hi if every element is smaller.
+
+    Invariant: everything in items[:lo] is < target, everything in items[hi:]
+    is >= target. The region [lo, hi) shrinks by half each step, and when it
+    collapses the two zones meet exactly at the answer.
+
+    Keeping the two bounds as parameters is what lets lower_bound search the
+    whole sequence and exponential_search search only its bracket - one loop,
+    no duplicated off-by-one risk. (Python's bisect_left takes lo/hi too.)
+    """
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if items[mid] < target:
+            # items[mid] belongs to the "smaller" zone; the answer is to the
+            # right, and we may even advance past mid itself.
+            lo = mid + 1
+        else:
+            # items[mid] >= target, so mid is a *candidate* answer; the real
+            # first qualifying element can only be at mid or to its left.
+            hi = mid
+    return lo
 
 
 def lower_bound(items: Sequence[T], target: T) -> int:
@@ -69,22 +97,7 @@ def lower_bound(items: Sequence[T], target: T) -> int:
 
     (Equivalently: C++ std::lower_bound, Python bisect.bisect_left.)
     """
-    lo, hi = 0, len(items)
-
-    # Invariant: everything in items[:lo] is < target, everything in
-    # items[hi:] is >= target. The region [lo, hi) shrinks by half each step,
-    # and when it collapses the two zones meet exactly at the answer.
-    while lo < hi:
-        mid = (lo + hi) // 2
-        if items[mid] < target:
-            # items[mid] belongs to the "smaller" zone; the answer is to the
-            # right, and we may even advance past mid itself.
-            lo = mid + 1
-        else:
-            # items[mid] >= target, so mid is a *candidate* answer; the real
-            # first qualifying element can only be at mid or to its left.
-            hi = mid
-    return lo
+    return _lower_bound_range(items, target, 0, len(items))
 
 
 def upper_bound(items: Sequence[T], target: T) -> int:
@@ -127,9 +140,11 @@ def exponential_search(items: Sequence[T], target: T) -> Optional[int]:
     Exponential search is the answer to the classic "search an infinite
     (or unknown-size) sorted array" problem: you cannot take len(items), so
     you probe indices 1, 2, 4, 8, ... until items[bound] >= target (or the
-    array ends), which brackets target inside [bound // 2, bound). A plain
-    binary search on an unbounded array has no place to start; doubling gives
-    you one in O(log i) probes, where i is the answer's index.
+    array ends), which brackets target inside [bound // 2, bound] - every
+    index below bound // 2 is then known to be smaller than target (by
+    sortedness), so a binary search over the bracket finds the answer. A
+    plain binary search on an unbounded array has no place to start; doubling
+    gives you one in O(log i) probes, where i is the answer's index.
 
     For bounded arrays it shines when target sits near the front (a linear
     scan up to index i would be O(i)); the doubling stays logarithmic.
@@ -149,18 +164,16 @@ def exponential_search(items: Sequence[T], target: T) -> Optional[int]:
         return None
 
     # Probe powers of two until we overshoot the target (or the array ends).
+    # Every index below the final bound // 2 is known to be < target, because
+    # the probes it shrank past all held smaller values (sortedness carries).
     bound = 1
     while bound < n and items[bound] < target:
         bound *= 2
 
-    # target is now inside [bound // 2, min(bound, n)) if it exists at all.
-    lo, hi = bound // 2, min(bound, n)
-    while lo < hi:
-        mid = (lo + hi) // 2
-        if items[mid] < target:
-            lo = mid + 1
-        else:
-            hi = mid
+    # The answer lies in [bound // 2, bound]: the kernel searches the
+    # half-open part, and index `bound` itself (if in range) is checked by the
+    # equality test below.
+    lo = _lower_bound_range(items, target, bound // 2, min(bound, n))
 
     if lo < n:
         if not (items[lo] < target) and not (target < items[lo]):
@@ -171,11 +184,9 @@ def exponential_search(items: Sequence[T], target: T) -> Optional[int]:
 def binary_search(items: Sequence[T], target: T) -> Optional[int]:
     """
     Return the index of target in the sorted sequence items, or None if it is
-    not present.
-
-    When the sequence holds duplicates, any one of the matching positions may
-    be returned - see lower_bound / upper_bound if you need "first" or "last"
-    specifically.
+    not present. When the sequence holds duplicates, the *first* matching
+    position is returned (the last is upper_bound(items, target) - 1) - see
+    lower_bound / upper_bound for the full range.
 
     Time: O(log n).  Space: O(1).
 

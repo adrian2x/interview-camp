@@ -74,7 +74,8 @@ def reservoir_sample(
 ) -> List[T]:
     """
     Return a uniformly random sample of k elements drawn from items, without
-    knowing how many elements items has (reservoir sampling).
+    knowing how many elements items has (reservoir sampling, Vitter's
+    Algorithm R). Raises ValueError if k is negative.
 
     The algorithm keeps a "reservoir" of the first k elements, then streams
     through the rest. When element number i (0-based) arrives and i >= k, it
@@ -84,12 +85,13 @@ def reservoir_sample(
         j = randrange(i + 1)
         if j < k: reservoir[j] = element
 
-    Why uniform? Inductively, after i elements every element seen is in the
-    reservoir with probability k / (i + 1). A newcomer gets in with exactly
-    that probability; an old resident survives because the newcomer misses it
-    (prob 1 - k/(i+1)) or replaces a different slot (prob (k-1)/k of the
-    k/(i+1) cases) - and the arithmetic works out to k/(i+2) for the next
-    round. Only O(k) memory is ever used, no matter how long the stream is.
+    Why uniform? Inductively, after element number i is processed every
+    element seen is in the reservoir with probability k / (i + 1). A newcomer
+    gets in with exactly that probability; an old resident survives because
+    the newcomer misses it (prob 1 - k/(i+1)) or replaces a different slot
+    (prob (k-1)/k of the k/(i+1) cases) - and the arithmetic works out to
+    k/(i+2) for the next round. Only O(k) memory is ever used, no matter how
+    long the stream is.
 
     If items has fewer than k elements, the whole stream is returned in order.
 

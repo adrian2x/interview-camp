@@ -63,7 +63,8 @@ def lcm(a: int, b: int) -> int:
     Return the least common multiple of a and b.
 
     Uses the identity lcm(a, b) * gcd(a, b) == |a * b|, dividing *before*
-    multiplying so the intermediate product never overflows.
+    multiplying so the intermediate stays small (that order is required in
+    fixed-width languages; Python's ints are arbitrary-precision anyway).
 
     Time: O(log min(a, b)) - one gcd call.  Space: O(1).
 
@@ -201,10 +202,14 @@ def modular_pow(base: int, exponent: int, modulus: int) -> int:
 # Prime hunting
 # ---------------------------------------------------------------------------
 
-# The first twelve primes. As Miller-Rabin bases they are *deterministic* for
-# every n < 3.3 * 10^24 (a verified result); beyond that the test is still
-# probabilistic with negligible error.
-_MR_BASES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37)
+# The first thirteen primes. As Miller-Rabin bases they are *deterministic*
+# for every n < 3,317,044,064,679,887,385,961,981 (~3.3 * 10^24), and that
+# bound is sharp - the smallest composite passing all thirteen bases is
+# exactly that number (Sorenson & Webster, "Strong pseudoprimes to twelve
+# prime bases", Math. Comp. 2016; OEIS A014233). Beyond it the test stays
+# probabilistic with negligible error. (The first twelve primes alone would
+# only guarantee ~3.2 * 10^23 - base 41 is what buys the extra decade.)
+_MR_BASES = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41)
 
 
 def sieve_of_eratosthenes(limit: int) -> List[int]:
@@ -259,16 +264,16 @@ def is_prime(n: int) -> bool:
 
     The idea: for an odd prime p, p - 1 = d * 2^s with d odd, and Fermat's
     little theorem says a^(p-1) == 1 (mod p). Taking square roots repeatedly
-    (which is allowed because p is prime) shows that either a^d == 1 or one
-    of a^(d*2), a^(d*4), ..., a^(d*2^(s-1)) == -1 (mod p). A *composite*
-    number that still satisfies this for some base a is called a strong
-    pseudoprime to that base - but a composite can pass only a small
-    fraction of bases, so testing several bases makes the error negligible.
+    (which is allowed because p is prime) shows that either a^d == 1, or
+    a^(d * 2^r) == -1 (mod p) for some 0 <= r < s. A *composite* number that
+    still satisfies this for some base a is called a strong pseudoprime to
+    that base - but a composite can pass only a small fraction of bases, so
+    testing several bases makes the error negligible.
 
-    The bases used here (the first twelve primes) make the test fully
-    deterministic for every n < 3.3 * 10^24, which covers all practical
-    inputs. A tiny trial division first handles small numbers and even
-    inputs cheaply.
+    The bases used here (the first thirteen primes) make the test fully
+    deterministic for every n < 3,317,044,064,679,887,385,961,981 (about
+    3.3 * 10^24), which covers all practical inputs. A tiny trial division
+    first handles small numbers and even inputs cheaply.
 
     Time: O(k log^3 n) for k bases.  Space: O(1).
 
@@ -326,7 +331,8 @@ def integer_sqrt(n: int) -> int:
     iteration fails to improve on the previous one.
 
     This integer version avoids floating-point rounding entirely, which makes
-    it exact for arbitrarily large n (try it on a 100-digit number).
+    it exact for arbitrarily large n (try it on a 100-digit number). For a
+    battle-tested one-liner, Python's math.isqrt does the same job.
 
     Time: O(log n) iterations of O(log^2 n) arithmetic.
     Space: O(1).
@@ -363,7 +369,8 @@ def hamming_weight(n: int) -> int:
     Why it works: subtracting 1 from n flips the lowest 1-bit to 0 and every
     0-bit below it to 1; ANDing with the original n therefore keeps all the
     higher bits and drops exactly that lowest set bit. One iteration per set
-    bit - so the cost is O(popcount), not O(number of bits).
+    bit - so the cost is O(popcount), not O(number of bits). (Python 3.10+
+    exposes this as int.bit_count().)
 
     Time: O(number of set bits).  Space: O(1).
 

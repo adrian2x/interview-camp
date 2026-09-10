@@ -22,13 +22,13 @@ reach for whenever someone asks "why is this greedy optimal?":
   optimal solution picks first, so swapping cannot shrink the rest.
 * fractional knapsack: if the optimum is not carrying the densest item,
   replace some of what it carries with that item and the value goes up.
-* Huffman: the two least-frequent symbols sit deepest in some optimal tree;
-  merging them first is therefore always safe.
+* Huffman: the two least-frequent symbols are siblings at maximum depth in
+  some optimal tree; merging them first is therefore always safe.
 """
 
 import heapq
 from collections.abc import Mapping, Sequence
-from typing import Dict, Hashable, List, Tuple, TypeVar
+from typing import Dict, Hashable, List, Tuple, TypeVar, Union
 
 T = TypeVar("T", bound=Hashable)  # symbol type for Huffman codes
 Number = TypeVar("Number", int, float)  # weights / frequencies / values
@@ -51,6 +51,9 @@ class _Node:
     def __init__(self, left: object, right: object):
         self.left = left
         self.right = right
+
+
+_Tree = Union[_Leaf, _Node]  # a Huffman tree is a leaf or an internal node
 
 
 def activity_selection(
@@ -169,6 +172,8 @@ def huffman_codes(
     therefore never preclude an optimal code, and induction on the merged
     problem completes the proof.
 
+    Raises ValueError if any frequency is not positive.
+
     Time: O(n log n) via the heap.  Space: O(n).
 
     Example:
@@ -183,9 +188,10 @@ def huffman_codes(
             raise ValueError(f"frequency of {symbol!r} must be positive")
 
     # Heap entries are (weight, counter, tree). The counter breaks weight
-    # ties so the heap never compares trees against each other.
+    # ties so the heap never compares trees against each other (the heapq
+    # docs' "entry count" recipe, as in graphs.dijkstra / prim_mst).
     counter = 0
-    heap: List[Tuple[Number, int, object]] = []
+    heap: List[Tuple[Number, int, _Tree]] = []
     for symbol, freq in frequencies.items():
         heapq.heappush(heap, (freq, counter, _Leaf(symbol)))
         counter += 1
@@ -200,10 +206,10 @@ def huffman_codes(
     root = heap[0][2]
     codes: Dict[T, str] = {}
 
-    # Iterative walk so skewed trees cannot hit the recursion limit (Fibo-
-    # nacci-like frequency distributions produce trees thousands deep, and
-    # the caller's alphabet size should never be capped by the call stack).
-    stack = [(root, "")]
+    # Iterative walk so skewed trees cannot hit the recursion limit (Fibonacci-
+    # like frequency distributions produce trees thousands deep, and the
+    # caller's alphabet size should never be capped by the call stack).
+    stack: List[Tuple[_Tree, str]] = [(root, "")]
     while stack:
         tree, prefix = stack.pop()
         if isinstance(tree, _Leaf):
@@ -213,6 +219,6 @@ def huffman_codes(
         else:
             # Push right first so left pops first: codes are assigned
             # left-to-right, matching a recursive traversal.
-            stack.append((tree.right, prefix + "1"))  # type: ignore[union-attr]
-            stack.append((tree.left, prefix + "0"))  # type: ignore[union-attr]
+            stack.append((tree.right, prefix + "1"))
+            stack.append((tree.left, prefix + "0"))
     return codes

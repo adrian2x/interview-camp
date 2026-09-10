@@ -188,12 +188,13 @@ def test_searching() -> None:
         )
         assert upper_bound(values, probe) == expected_hi
 
-        # binary_search and exponential_search must both agree with Python.
+        # binary_search and exponential_search must both agree with Python,
+        # and both return the FIRST occurrence under duplicates.
         for fn in (binary_search, exponential_search):
             got = fn(values, probe)
             if probe in values:
                 assert got is not None and values[got] == probe
-                assert expected_lo <= got < expected_hi
+                assert got == expected_lo
             else:
                 assert got is None
 
@@ -406,6 +407,9 @@ def test_numbers() -> None:
     assert is_prime(2**31 - 1)  # Mersenne prime
     assert is_prime(2305843009213693951)  # 2**61 - 1, Mersenne prime
     assert not is_prime(147573952589676412927)  # 2**67 - 1, composite
+    # Smallest strong pseudoprime to the first twelve primes: caught once
+    # base 41 joins the set (the bound would otherwise be ~3.2e23, not 3.3e24).
+    assert not is_prime(318665857834031151167461)
 
     # integer_sqrt against math.isqrt.
     for _ in range(300):
@@ -554,12 +558,12 @@ def test_dp() -> None:
         got = longest_common_subsequence(a, b)
         assert len(got) == brute_lcs_len(a, b)
         assert is_subseq(got, a) and is_subseq(got, b)
-    assert longest_common_subsequence("ABCBDAB", "BDCABA") == "BCBA"
-    assert longest_common_subsequence("abc", "def") == ""
-    # Container mirroring: tuples in, tuple out.
+    assert longest_common_subsequence("ABCBDAB", "BDCABA") == list("BCBA")
+    assert longest_common_subsequence("abc", "def") == []
+    # The result is always a list, whatever containers came in.
     out = longest_common_subsequence((1, 2, 3, 4), (2, 4, 6))
-    assert isinstance(out, tuple) and out == (2, 4)
-    assert longest_common_subsequence((2, 4, 6), (1, 2, 3, 4)) == (2, 4)
+    assert isinstance(out, list) and out == [2, 4]
+    assert longest_common_subsequence((2, 4, 6), (1, 2, 3, 4)) == [2, 4]
 
     # Longest common substring against brute force over all substrings.
     def brute_lcsubstring(a, b):
@@ -575,12 +579,13 @@ def test_dp() -> None:
         b = "".join(rng.choice("abc") for _ in range(rng.randrange(0, 9)))
         got = longest_common_substring(a, b)
         assert len(got) == brute_lcsubstring(a, b), (a, b, got)
-        assert got in a and got in b
-    assert longest_common_substring("abcde", "zbcdf") == "bcd"
-    assert longest_common_substring("abc", "def") == ""
-    # Shorter first argument (the swap path) and container mirroring.
-    assert longest_common_substring("bcd", "abcdbef") == "bcd"
-    assert longest_common_substring((1, 2, 3), (0, 1, 2, 3, 4)) == (1, 2, 3)
+        joined = "".join(got)
+        assert joined in a and joined in b
+    assert longest_common_substring("abcde", "zbcdf") == list("bcd")
+    assert longest_common_substring("abc", "def") == []
+    # Shorter first argument exercises the swap path; result is still a list.
+    assert longest_common_substring("bcd", "abcdbef") == list("bcd")
+    assert longest_common_substring((1, 2, 3), (0, 1, 2, 3, 4)) == [1, 2, 3]
 
     # Edit distance against a memoized recursive reference.
     def ref_edit(a, b):
