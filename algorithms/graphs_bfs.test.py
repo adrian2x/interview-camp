@@ -22,7 +22,17 @@ def test_bfs_string_nodes():
     assert bfs(g, "paper", "essay") is True
 
 
+def test_bfs_does_not_mutate_nodes():
+    g = Graph(n=2, edges=[(0, 1)], directed=True)
+    before = set(g.nodes)
+    assert bfs(g, 9, 1) is False
+    assert set(g.nodes) == before
+    assert 9 not in g.nodes
+    assert g.size == 2
+
+
 if __name__ == "__main__":
     test_bfs_reachability()
     test_bfs_string_nodes()
+    test_bfs_does_not_mutate_nodes()
     print("bfs tests passed")

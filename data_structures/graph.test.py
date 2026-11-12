@@ -14,6 +14,9 @@ def test_nodes_is_kv_defaultdict_shape():
     assert g.nodes.get(0) == [1]
     assert g.nodes.get(2) == []
     assert g.nodes.get(99) == []
+    # explicit default is honored (incl. None) — stdlib dict.get contract
+    assert g.nodes.get(99, None) is None
+    assert g.nodes.get(99, "missing") == "missing"
     # get must not insert missing keys (unlike nodes[cur])
     assert 99 not in g.nodes
     assert g.size == 3

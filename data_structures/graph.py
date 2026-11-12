@@ -4,21 +4,25 @@ from collections import defaultdict
 from typing import Hashable, Iterable, Iterator, List, Optional, Tuple
 
 
+_MISSING = object()
+
+
 class AdjacencyMap(defaultdict):
     """Dict-like adjacency store: ``nodes[cur]`` / ``nodes.get(cur)`` → neighbors.
 
     Like ``defaultdict(list)``, missing keys materialize an empty neighbor list
-    on ``[]`` access. ``get`` returns an empty list by default so callers can
-    safely write ``nodes.get(cur)`` without a second argument.
+    on ``[]`` access. ``get(cur)`` with no default returns an empty list without
+    inserting the key. An explicit ``default`` (including ``None``) is honored,
+    matching the stdlib ``dict.get`` contract.
     """
 
     def __init__(self):
         super().__init__(list)
 
-    def get(self, key, default=None):
+    def get(self, key, default=_MISSING):
         if key in self:
             return self[key]
-        if default is None:
+        if default is _MISSING:
             return self.default_factory()
         return default
 

@@ -12,8 +12,8 @@ class Edge:
 def bfs(graph, source: Hashable, target: Hashable) -> bool:
     """Example BFS reachability over a Graph with a KV ``nodes`` map.
 
-    Expects ``graph.nodes[cur]`` (or ``graph.nodes.get(cur)``) to yield the
-    neighbors of ``cur``.
+    Uses ``graph.nodes.get(cur)`` so lookup does not insert missing keys
+    (unlike ``graph.nodes[cur]`` on a defaultdict-backed map).
     """
     if source == target:
         return True
@@ -23,7 +23,7 @@ def bfs(graph, source: Hashable, target: Hashable) -> bool:
 
     while queue:
         cur = queue.popleft()
-        for nxt in graph.nodes[cur]:
+        for nxt in graph.nodes.get(cur):
             if nxt in visited:
                 continue
             if nxt == target:
