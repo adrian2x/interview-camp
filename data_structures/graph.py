@@ -24,10 +24,10 @@ class AdjacencyMap(defaultdict):
 
 
 class Graph:
-    """Adjacency-list graph supporting the CFS-style interface:
+    """General-purpose adjacency-list graph.
 
     - ``g.size`` — number of vertices
-    - ``g.nodes[cur]`` — iterable of neighbors for ``cur``
+    - ``g.nodes[cur]`` — neighbors of ``cur``
     - ``g.nodes.get(cur)`` — same lookup with a safe empty default
 
     ``nodes`` is a key→neighbors map (``cur: [neighbors...]``), backed by a
@@ -49,7 +49,7 @@ class Graph:
             if n < 0:
                 raise ValueError("n must be non-negative")
             for i in range(n):
-                # Pre-register integer vertices 0..n-1 (CFS / vector indexing).
+                # Pre-register integer vertices 0..n-1.
                 _ = self.nodes[i]
             self._size = n
 

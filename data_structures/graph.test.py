@@ -19,14 +19,9 @@ def test_nodes_is_kv_defaultdict_shape():
     assert g.size == 3
 
 
-def test_cfs_style_access_pattern():
-    """Mirror the tweet's loop: for next in g.nodes[cur]."""
+def test_nodes_iteration():
     g = Graph(n=4, edges=[(0, 1), (0, 2), (2, 3)], directed=True)
-    cur = 0
-    neighbors = []
-    for nxt in g.nodes[cur]:
-        neighbors.append(nxt)
-    assert neighbors == [1, 2]
+    assert list(g.nodes[0]) == [1, 2]
     assert g.size == 4
 
 
@@ -49,7 +44,7 @@ def test_add_node_and_edge():
 
 if __name__ == "__main__":
     test_nodes_is_kv_defaultdict_shape()
-    test_cfs_style_access_pattern()
+    test_nodes_iteration()
     test_undirected_edges()
     test_add_node_and_edge()
     print("graph tests passed")

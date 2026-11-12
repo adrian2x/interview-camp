@@ -1,4 +1,4 @@
-from typing import Hashable, List, MutableSequence
+from typing import Hashable, List
 from collections import defaultdict, deque
 
 
@@ -9,46 +9,29 @@ class Edge:
         self.cost = cost
 
 
-def cfs(graph, source: Hashable, target: Hashable, container: MutableSequence) -> bool:
-    """Common First Search — BFS and DFS share this template.
+def bfs(graph, source: Hashable, target: Hashable) -> bool:
+    """Example BFS reachability over a Graph with a KV ``nodes`` map.
 
-    Matches the CFS interface from ChShersh: a graph object exposes
-    ``graph.size`` and a KV ``graph.nodes`` map where ``graph.nodes[cur]``
-    (or ``graph.nodes.get(cur)``) yields the neighbors of ``cur``.
-
-    The search order is controlled by ``container``:
-    - ``deque`` (FIFO) → BFS
-    - ``list`` (LIFO / stack) → DFS
+    Expects ``graph.nodes[cur]`` (or ``graph.nodes.get(cur)``) to yield the
+    neighbors of ``cur``.
     """
     if source == target:
         return True
 
-    visited = set()
-    container.append(source)
-    visited.add(source)
+    visited = {source}
+    queue = deque([source])
 
-    while container:
-        # deque.popleft for BFS; list.pop for DFS
-        cur = container.popleft() if hasattr(container, "popleft") else container.pop()
+    while queue:
+        cur = queue.popleft()
         for nxt in graph.nodes[cur]:
             if nxt in visited:
                 continue
             if nxt == target:
                 return True
             visited.add(nxt)
-            container.append(nxt)
+            queue.append(nxt)
 
     return False
-
-
-def bfs(graph, source: Hashable, target: Hashable) -> bool:
-    "Breadth-first reachability via CFS + queue."
-    return cfs(graph, source, target, deque())
-
-
-def dfs(graph, source: Hashable, target: Hashable) -> bool:
-    "Depth-first reachability via CFS + stack."
-    return cfs(graph, source, target, [])
 
 
 def bellman_ford(graph: List[Edge], nodes, source):
