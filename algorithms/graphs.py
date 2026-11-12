@@ -1,4 +1,4 @@
-from typing import List
+from typing import Hashable, List
 from collections import defaultdict, deque
 
 
@@ -7,6 +7,31 @@ class Edge:
         self.start = start
         self.end = end
         self.cost = cost
+
+
+def bfs(graph, source: Hashable, target: Hashable) -> bool:
+    """Example BFS reachability over a Graph with a KV ``nodes`` map.
+
+    Uses ``graph.nodes.get(cur)`` so lookup does not insert missing keys
+    (unlike ``graph.nodes[cur]`` on a defaultdict-backed map).
+    """
+    if source == target:
+        return True
+
+    visited = {source}
+    queue = deque([source])
+
+    while queue:
+        cur = queue.popleft()
+        for nxt in graph.nodes.get(cur):
+            if nxt in visited:
+                continue
+            if nxt == target:
+                return True
+            visited.add(nxt)
+            queue.append(nxt)
+
+    return False
 
 
 def bellman_ford(graph: List[Edge], nodes, source):
